@@ -10,20 +10,7 @@
     "DocsURL": "https://github.com/ewhougesen/ue-ai-plugin",
     "MarketplaceURL": "",
     "SupportURL": "https://github.com/ewhougesen/ue-ai-plugin/issues",
-    "CanContainContent": false,
+    "CanContainContent": true,
     "IsBetaVersion": true,
-    "Installed": false,
-    "Modules": [
-        {
-            "Name": "UEAIPlugin",
-            "Type": "Runtime",
-            "LoadingPhase": "Default"
-        }
-    ],
-    "Plugins": [
-        {
-            "Name": "PythonScriptPlugin",
-            "Enabled": true
-        }
-    ]
+    "Installed": false
 }

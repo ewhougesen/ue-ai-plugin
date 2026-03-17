@@ -1,162 +1,102 @@
-# UE AI Plugin - Unreal Engine Plugin
+# UE AI Plugin - Quick Start (Mac/Python)
 
-AI-powered copilot plugin for Unreal Engine 5.5+ that enables natural language interaction for creating and editing 3D assets, materials, and animations.
+AI-powered copilot for Unreal Engine 5.5+. Natural language interface for creating and editing 3D assets, materials, and animations.
+
+## Quick Start
+
+### 1. Enable Python Startup Script
+
+Open Unreal Editor and go to:
+- **Edit → Editor Preferences**
+- Search "Python"
+- Enable "Python Script Plugin"
+- Set "Run Startup Script" = ON
+- Set "Python Script File" to:
+  ```
+  /Volumes/SERENADA_2/_elliott/Unreal Projects/UEAI-Plugin-Test/Content/Python/init_unreal.py
+  ```
+- Click "Set" and restart Unreal Editor
+
+### 2. Start the Backend
+
+```bash
+cd ~/repos/ue-ai-plugin
+docker-compose up
+```
+
+### 3. Use the AI Chat
+
+In Unreal Editor, open **Output Log → Python** tab:
+
+```python
+# Chat with AI
+ai_chat.send("Create a red cube at position 0,0,100")
+ai_chat.send("Make a blue material called Water")
+ai_chat.send("Spawn a sphere")
+
+# Quick commands
+ai_chat.create_cube("MyCube", (100, 100, 100))
+ai_chat.create_material("RedMat", (1.0, 0.0, 0.0))
+
+# View history
+ai_chat.history()
+
+# Clear history
+ai_chat.clear()
+```
 
 ## Features
 
-- 💬 Natural language chat interface in Unreal Editor
-- 🤖 Integration with AI backend (Claude/z.ai)
-- 🎨 Asset generation and material creation
-- 📊 Real-time connection status
-- ⚙️ Configurable backend server URL
+- 💬 Natural language chat interface
+- 🤖 AI integration via z.ai (glm-4.7 model)
+- 🎨 Create materials with natural language
+- 🧊 Spawn actors and shapes
+- 📊 Chat history
+- ⚙️ Configurable backend
 
-## Installation
-
-### Method 1: Copy to Your Project
-
-1. Copy the `UEAIPlugin` folder to your project's `Plugins` directory
-2. Right-click on `.uproject` file → "Generate Visual Studio project files"
-3. Open your project in Unreal Editor
-4. Go to Edit → Plugins → Enable "UE AI Plugin"
-5. Restart Unreal Editor
-
-### Method 2: Marketplace (Future)
-
-Coming soon to the Unreal Engine Marketplace.
-
-## Usage
-
-### Opening the Plugin
-
-1. Open Unreal Editor
-2. Go to **Window → AI → UE AI Plugin**
-3. The AI assistant panel will open in the editor
-
-### Example Commands
-
-```
-"Create a red sphere material"
-"Add a point light to the scene"
-"Make a simple cube with metallic material"
-"Generate a rock mesh"
-```
-
-## Configuration
-
-The plugin settings are stored in:
-
-```
-Config/DefaultUEAIPlugin.ini
-```
-
-### Settings
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `BackendServerURL` | `http://localhost:8000` | URL of the backend AI server |
-| `bAutoConnect` | `true` | Auto-connect to backend on startup |
-| `ChatHistoryLimit` | `50` | Maximum messages in chat history |
-| `ZaiAPIKey` | (empty) | Optional z.ai API key |
-
-## Building
-
-### Requirements
-
-- Unreal Engine 5.5 or later
-- Visual Studio 2022 (Windows) or Xcode (Mac)
-- C++14 support
-
-### Build Steps
-
-1. Place the plugin in your project's `Plugins` folder
-2. Generate project files:
-   ```bash
-   # Right-click on .uproject file in Explorer
-   # Or use the Unreal Build Tool
-   ```
-3. Open the generated solution in your IDE
-4. Build the project
-
-## Architecture
+## Architecture (Python/Blueprint)
 
 ```
 ┌──────────────────────┐
 │  Unreal Editor       │
 │  ┌────────────────┐  │
-│  │ UE AI Plugin   │  │
-│  │  (C++ Module)  │  │
+│  │ Python Module  │  │
+│  │ (ai_chat)      │  │
 │  └────────┬───────┘  │
 └───────────┼──────────┘
             │ HTTP
 ┌───────────▼──────────┐
 │  Backend Server      │
-│  (FastAPI + Claude)  │
+│  (FastAPI + z.ai)    │
 │  localhost:8000      │
 └──────────────────────┘
 ```
 
-## Development
-
-### Project Structure
-
-```
-ue-plugin/
-├── UEAIPlugin.uplugin          # Plugin manifest
-├── Source/
-│   └── UEAIPlugin/
-│       ├── UEAIPlugin.Build.cs # Build configuration
-│       ├── Public/             # Public headers
-│       │   ├── UEAIPlugin.h
-│       │   ├── UEAIService.h
-│       │   ├── UEAIEditorWidget.h
-│       │   └── UEAIPluginSettings.h
-│       └── Private/            # Private implementation
-│           ├── UEAIPlugin.cpp
-│           ├── UEAIService.cpp
-│           ├── UEAIEditorWidget.cpp
-│           └── UEAIPluginSettings.cpp
-├── Resources/                   # Icons and assets
-└── Content/                     # UE content
-```
-
-### Adding New Features
-
-1. Add header to `Public/`
-2. Add implementation to `Private/`
-3. Update `UEAIPlugin.Build.cs` if new dependencies are needed
-4. Rebuild the plugin
-
 ## Troubleshooting
 
-### Plugin not appearing
+### "ai_chat not found"
+- Enable Python Script Plugin in Edit → Plugins
+- Set startup script in Editor Preferences
+- Restart Unreal Editor
 
-1. Check that the plugin is in the `Plugins` folder
-2. Verify the `UEAIPlugin.uplugin` file is valid
-3. Enable the plugin in Edit → Plugins
-4. Restart Unreal Editor
+### "Cannot connect to backend"
+- Make sure Docker is running: `docker-compose up`
+- Check backend is at http://localhost:8000
+- Test: `curl http://localhost:8000/health`
 
-### Backend connection failed
+### Plugin not enabled
+- Go to Edit → Plugins
+- Search "UE AI Plugin"
+- Click "Enabled"
+- Restart Unreal Editor
 
-1. Verify the backend server is running at the configured URL
-2. Check the connection status in the plugin panel
-3. Check firewall settings
+## Requirements
 
-### Compilation errors
-
-1. Regenerate project files
-2. Clean and rebuild
-3. Check that all dependencies are listed in `.Build.cs`
-
-## Contributing
-
-This project follows TDD (Test Driven Development). See `TDD_POLICY.md` in the root directory.
+- Unreal Engine 5.5+
+- Python Script Plugin (built-in)
+- Docker (for backend server)
+- 4GB RAM minimum
 
 ## License
 
-MIT License - See LICENSE file for details.
-
-## Credits
-
-- Developed for UE AI Plugin project
-- Uses z.ai API for Claude integration
-- Built with Unreal Engine 5.5
+MIT License
