@@ -1,0 +1,29 @@
+{
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "0.1.0",
+    "FriendlyName": "UE AI Plugin",
+    "Description": "AI-powered copilot for Unreal Engine 5. Natural language interface for creating and editing 3D assets, materials, and animations.",
+    "Category": "Programming",
+    "CreatedBy": "ewhougesen",
+    "CreatedByURL": "https://github.com/ewhougesen",
+    "DocsURL": "https://github.com/ewhougesen/ue-ai-plugin",
+    "MarketplaceURL": "",
+    "SupportURL": "https://github.com/ewhougesen/ue-ai-plugin/issues",
+    "CanContainContent": false,
+    "IsBetaVersion": true,
+    "Installed": false,
+    "Modules": [
+        {
+            "Name": "UEAIPlugin",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        }
+    ],
+    "Plugins": [
+        {
+            "Name": "PythonScriptPlugin",
+            "Enabled": true
+        }
+    ]
+}
