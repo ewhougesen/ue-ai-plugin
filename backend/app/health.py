@@ -1,4 +1,4 @@
-"""Health check endpoints for HTTP monitoring"""
+"""Health check endpoints"""
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -9,7 +9,7 @@ class HealthResponse(BaseModel):
     """Health check response"""
     healthy: bool = True
     version: str = "0.1.0"
-    services: list[str] = ["grpc", "claude", "asset_manager"]
+    services: list[str] = ["http_api", "claude", "asset_manager"]
 
 
 @health_check_router.get("/health", response_model=HealthResponse)

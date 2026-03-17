@@ -1,9 +1,4 @@
-# gRPC
-grpcio==1.62.0
-grpcio-tools==1.62.0
-protobuf==5.26.1
-
-# Web Framework
+# Web Framework (HTTP API - MVP)
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
 pydantic==2.5.3

@@ -48,8 +48,7 @@ class Settings(BaseSettings):
     DEFAULT_AI_SERVICE: str = "meshy"
     ASSET_TIMEOUT_SECONDS: int = 300  # 5 minutes
 
-    # Claude Settings (mapped to z.ai models)
-    CLAUDE_MODEL: str = None  # Will use ANTHROPIC_DEFAULT_SONNET_MODEL
+    # Claude Settings (use default from z.ai models)
     CLAUDE_MAX_TOKENS: int = 4096
 
     class Config:
@@ -58,8 +57,6 @@ class Settings(BaseSettings):
 
     def get_claude_model(self) -> str:
         """Get the appropriate Claude model for z.ai"""
-        if self.CLAUDE_MODEL:
-            return self.CLAUDE_MODEL
         return self.ANTHROPIC_DEFAULT_SONNET_MODEL
 
 
