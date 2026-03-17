@@ -279,10 +279,10 @@ class InfiniteCreationEngine:
         # Extract properties
         parsed["properties"]["color"] = self._extract_color_advanced(description)
         parsed["properties"]["size"] = self._extract_size_advanced(description)
-        parsed["properties["material"] = self._extract_material_properties(description)
+        parsed["properties"]["material"] = self._extract_material_properties(description)
         parsed["properties"]["style"] = self._extract_style(description)
         parsed["properties"]["position"] = self._extract_position(description)
-        parsed["properties["quantity"] = self._extract_quantity_advanced(description)
+        parsed["properties"]["quantity"] = self._extract_quantity_advanced(description)
 
         return parsed
 
