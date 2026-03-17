@@ -78,6 +78,47 @@ class InfiniteCreationEngine:
                 "create": self._create_golem,
                 "materials": ["stone", "crystals"]
             },
+            # Corelings (The Painted Man / Demon Cycle series)
+            "wind demon": {
+                "components": ["body", "wings", "head", "tail", "claws"],
+                "create": self._create_wind_demon,
+                "materials": ["leather", "scales", "glowing_eyes"]
+            },
+            "fire demon": {
+                "components": ["body", "head", "flames", "arms"],
+                "create": self._create_fire_demon,
+                "materials": ["flames", "charred_skin", "glowing_core"]
+            },
+            "water demon": {
+                "components": ["body", "tentacles", "head", "tail"],
+                "create": self._create_water_demon,
+                "materials": ["slick_skin", "scales", "bioluminescence"]
+            },
+            "rock demon": {
+                "components": ["body", "head", "arms", "armor"],
+                "create": self._create_rock_demon,
+                "materials": ["stone_armor", "rough_skin", "spikes"]
+            },
+            "wood demon": {
+                "components": ["body", "head", "limbs", "vines"],
+                "create": self._create_wood_demon,
+                "materials": ["bark", "vines", "leaves"]
+            },
+            "mind demon": {
+                "components": ["body", "head", "arms", "aura"],
+                "create": self._create_mind_demon,
+                "materials": ["pale_skin", "psychic_glow", "robe"]
+            },
+            "hashak": {
+                "components": ["body", "head", "massive_arms", "armor"],
+                "create": self._create_hashak,
+                "materials": ["thick_armor", "spikes", "glowing_eyes"]
+            },
+            "coreling": {
+                "components": ["body", "limbs", "magic_aura"],
+                "create": self._create_coreling_generic,
+                "materials": ["demon_skin", "magic"]
+            },
             "spaceship": {
                 "components": ["hull", "cockpit", "engines", "wings"],
                 "create": self._create_spaceship,
@@ -245,6 +286,9 @@ class InfiniteCreationEngine:
             # Creatures
             "dragon", "wolf", "eagle", "fish", "insect", "unicorn", "phoenix", "golem",
             "creature", "monster", "animal", "beast",
+            # Corelings (The Painted Man / Demon Cycle)
+            "wind demon", "fire demon", "water demon", "rock demon", "wood demon",
+            "mind demon", "hashak", "coreling", "demon",
             # Vehicles
             "spaceship", "starship", "car", "motorcycle", "boat", "airplane", "helicopter", "tank",
             "vehicle", "ship", "plane",
@@ -1332,6 +1376,706 @@ class InfiniteCreationEngine:
             "message": f"Created {name} (Golem)",
             "name": name,
             "type": "golem",
+            "actors": created_actors
+        }
+
+    # ============================================================
+    # CORELING CREATION (The Painted Man / Demon Cycle)
+    # ============================================================
+
+    def _create_wind_demon(self, parsed: dict) -> dict:
+        """Create a Wind Demon - flying, bat-like with leather wings"""
+        name = parsed.get("name") or "WindDemon"
+        props = parsed["properties"]
+        position = props["position"]
+        scale = props["size"] or 1.5
+
+        unreal.log("💨 Creating Wind Demon...")
+
+        created_actors = []
+
+        # Body (lean, humanoid)
+        body_scale = (scale * 0.4, scale * 0.3, scale * 1.2)
+        body_pos = position
+        body = self._create_composite_cube(
+            f"{name}_Body", body_pos, body_scale,
+            (0.3, 0.25, 0.2)  # Dark brown/gray skin
+        )
+        created_actors.append(body["actor"])
+
+        # Head (bestial, bat-like)
+        head_scale = (scale * 0.25, scale * 0.3, scale * 0.3)
+        head_pos = (position[0], position[1], position[2] + scale * 0.75)
+        head = self._create_composite_cube(
+            f"{name}_Head", head_pos, head_scale,
+            (0.3, 0.25, 0.2)
+        )
+        created_actors.append(head["actor"])
+
+        # Glowing eyes (red)
+        eye_scale = (scale * 0.05, scale * 0.05, scale * 0.05)
+        eye_pos_l = (head_pos[0] - scale * 0.08, head_pos[1], head_pos[2] + scale * 0.12)
+        eye_pos_r = (head_pos[0] + scale * 0.08, head_pos[1], head_pos[2] + scale * 0.12)
+        eye_l = self._create_composite_cube(f"{name}_Eye_L", eye_pos_l, eye_scale, (1, 0.2, 0))
+        eye_r = self._create_composite_cube(f"{name}_Eye_R", eye_pos_r, eye_scale, (1, 0.2, 0))
+        created_actors.append(eye_l["actor"])
+        created_actors.append(eye_r["actor"])
+
+        # Wings (large, leather-like)
+        for side in [-1, 1]:
+            wing_scale = (scale * 2.5, scale * 0.05, scale * 1.2)
+            wing_pos = (position[0] + side * scale * 0.8, position[1], position[2] + scale * 0.3)
+            wing = self._create_composite_cube(
+                f"{name}_Wing_{'L' if side < 0 else 'R'}", wing_pos, wing_scale,
+                (0.25, 0.2, 0.15)  # Dark leather
+            )
+            created_actors.append(wing["actor"])
+
+        # Claws (on hands and feet)
+        for side in [-1, 1]:
+            claw_scale = (scale * 0.08, scale * 0.15, scale * 0.08)
+            claw_pos_l = (position[0] + side * scale * 0.5, position[1] - scale * 0.2, position[2] + scale * 0.5)
+            claw_pos_f = (position[0] + side * scale * 0.5, position[1] - scale * 0.2, position[2])
+            claw_l = self._create_composite_cube(f"{name}_Claw_Hand_{'L' if side < 0 else 'R'}", claw_pos_l, claw_scale, (0.2, 0.15, 0.1))
+            claw_f = self._create_composite_cube(f"{name}_Claw_Foot_{'L' if side < 0 else 'R'}", claw_pos_f, claw_scale, (0.2, 0.15, 0.1))
+            created_actors.append(claw_l["actor"])
+            created_actors.append(claw_f["actor"])
+
+        # Tail (long, thin)
+        tail_scale = (scale * 0.08, scale * 0.4, scale * 0.08)
+        tail_pos = (position[0], position[1] - scale * 0.3, position[2] - scale * 0.3)
+        tail = self._create_composite_cube(f"{name}_Tail", tail_pos, tail_scale, (0.3, 0.25, 0.2))
+        created_actors.append(tail["actor"])
+
+        unreal.log(f"💨 Wind Demon created with {len(created_actors)} components")
+
+        return {
+            "message": f"Created {name} (Wind Demon)",
+            "name": name,
+            "type": "wind demon",
+            "actors": created_actors
+        }
+
+    def _create_fire_demon(self, parsed: dict) -> dict:
+        """Create a Fire Demon - humanoid, engulfed in flames"""
+        name = parsed.get("name") or "FireDemon"
+        props = parsed["properties"]
+        position = props["position"]
+        scale = props["size"] or 2.0
+
+        unreal.log("🔥 Creating Fire Demon...")
+
+        created_actors = []
+
+        # Body (charred, dark skin)
+        body_scale = (scale * 0.6, scale * 0.4, scale * 1.5)
+        body_pos = position
+        body = self._create_composite_cube(
+            f"{name}_Body", body_pos, body_scale,
+            (0.15, 0.1, 0.08)  # Charred black/brown
+        )
+        created_actors.append(body["actor"])
+
+        # Head
+        head_scale = (scale * 0.3, scale * 0.3, scale * 0.35)
+        head_pos = (position[0], position[1], position[2] + scale * 0.95)
+        head = self._create_composite_cube(
+            f"{name}_Head", head_pos, head_scale,
+            (0.15, 0.1, 0.08)
+        )
+        created_actors.append(head["actor"])
+
+        # Glowing eyes (intense orange)
+        eye_scale = (scale * 0.08, scale * 0.05, scale * 0.08)
+        eye_pos_l = (head_pos[0] - scale * 0.1, head_pos[1], head_pos[2] + scale * 0.15)
+        eye_pos_r = (head_pos[0] + scale * 0.1, head_pos[1], head_pos[2] + scale * 0.15)
+        eye_l = self._create_composite_cube(f"{name}_Eye_L", eye_pos_l, eye_scale, (1, 0.5, 0))
+        eye_r = self._create_composite_cube(f"{name}_Eye_R", eye_pos_r, eye_scale, (1, 0.5, 0))
+        created_actors.append(eye_l["actor"])
+        created_actors.append(eye_r["actor"])
+
+        # Arms
+        arm_scale = (scale * 0.2, scale * 0.2, scale * 0.8)
+        arm_pos_l = (position[0] - scale * 0.5, position[1], position[2] + scale * 0.5)
+        arm_pos_r = (position[0] + scale * 0.5, position[1], position[2] + scale * 0.5)
+        arm_l = self._create_composite_cube(f"{name}_Arm_L", arm_pos_l, arm_scale, (0.15, 0.1, 0.08))
+        arm_r = self._create_composite_cube(f"{name}_Arm_R", arm_pos_r, arm_scale, (0.15, 0.1, 0.08))
+        created_actors.append(arm_l["actor"])
+        created_actors.append(arm_r["actor"])
+
+        # Flames surrounding the body (multiple layers)
+        for i in range(12):
+            flame_scale = (scale * 0.15, scale * 0.15, scale * 0.3)
+            angle = (2 * math.pi * i) / 12
+            flame_pos = (
+                position[0] + scale * 0.6 * math.cos(angle),
+                position[1] + scale * 0.6 * math.sin(angle),
+                position[2] + scale * 0.5 + (i % 3) * scale * 0.3
+            )
+            flame = self._create_composite_cube(
+                f"{name}_Flame_{i}", flame_pos, flame_scale,
+                (1, 0.3 - (i % 3) * 0.05, 0)  # Orange to yellow gradient
+            )
+            created_actors.append(flame["actor"])
+
+        # Core glow (chest)
+        core_scale = (scale * 0.2, scale * 0.1, scale * 0.2)
+        core_pos = (position[0], position[1] + scale * 0.25, position[2] + scale * 0.5)
+        core = self._create_composite_cube(f"{name}_Core", core_pos, core_scale, (1, 0.8, 0))
+        created_actors.append(core["actor"])
+
+        unreal.log(f"🔥 Fire Demon created with {len(created_actors)} components")
+
+        return {
+            "message": f"Created {name} (Fire Demon)",
+            "name": name,
+            "type": "fire demon",
+            "actors": created_actors
+        }
+
+    def _create_water_demon(self, parsed: dict) -> dict:
+        """Create a Water Demon - aquatic with tentacles"""
+        name = parsed.get("name") or "WaterDemon"
+        props = parsed["properties"]
+        position = props["position"]
+        scale = props["size"] or 2.5
+
+        unreal.log("🌊 Creating Water Demon...")
+
+        created_actors = []
+
+        # Body (streamlined, aquatic)
+        body_scale = (scale * 0.8, scale * 0.6, scale * 1.5)
+        body_pos = position
+        body = self._create_composite_cube(
+            f"{name}_Body", body_pos, body_scale,
+            (0.1, 0.3, 0.4)  # Blue-green aquatic color
+        )
+        created_actors.append(body["actor"])
+
+        # Head (fish-like)
+        head_scale = (scale * 0.4, scale * 0.35, scale * 0.4)
+        head_pos = (position[0], position[1], position[2] + scale * 0.95)
+        head = self._create_composite_cube(
+            f"{name}_Head", head_pos, head_scale,
+            (0.1, 0.3, 0.4)
+        )
+        created_actors.append(head["actor"])
+
+        # Bioluminescent eyes
+        eye_scale = (scale * 0.1, scale * 0.08, scale * 0.1)
+        eye_pos_l = (head_pos[0] - scale * 0.15, head_pos[1], head_pos[2] + scale * 0.15)
+        eye_pos_r = (head_pos[0] + scale * 0.15, head_pos[1], head_pos[2] + scale * 0.15)
+        eye_l = self._create_composite_cube(f"{name}_Eye_L", eye_pos_l, eye_scale, (0.5, 1, 0.8))
+        eye_r = self._create_composite_cube(f"{name}_Eye_R", eye_pos_r, eye_scale, (0.5, 1, 0.8))
+        created_actors.append(eye_l["actor"])
+        created_actors.append(eye_r["actor"])
+
+        # Tentacles (8 tentacles)
+        for i in range(8):
+            angle = (2 * math.pi * i) / 8
+            for j in range(3):  # 3 segments per tentacle
+                tentacle_scale = (scale * 0.08, scale * 0.15, scale * 0.08)
+                tentacle_pos = (
+                    position[0] + (scale * 0.5 + j * scale * 0.2) * math.cos(angle),
+                    position[1] + (scale * 0.5 + j * scale * 0.2) * math.sin(angle),
+                    position[2] - scale * 0.5 - j * scale * 0.2
+                )
+                tentacle = self._create_composite_cube(
+                    f"{name}_Tentacle_{i}_{j}", tentacle_pos, tentacle_scale,
+                    (0.1, 0.3, 0.4)
+                )
+                created_actors.append(tentacle["actor"])
+
+        # Tail (aquatic)
+        tail_scale = (scale * 0.3, scale * 0.8, scale * 0.2)
+        tail_pos = (position[0], position[1] - scale * 0.5, position[2] - scale * 0.8)
+        tail = self._create_composite_cube(f"{name}_Tail", tail_pos, tail_scale, (0.1, 0.3, 0.4))
+        created_actors.append(tail["actor"])
+
+        # Scales (decorative)
+        for i in range(6):
+            scale_scale = (scale * 0.1, scale * 0.02, scale * 0.1)
+            scale_pos = (
+                body_pos[0] + ((i % 2) - 0.5) * scale * 0.4,
+                body_pos[1] + scale * 0.31,
+                body_pos[2] + (i // 2) * scale * 0.3
+            )
+            sc = self._create_composite_cube(
+                f"{name}_Scale_{i}", scale_pos, scale_scale,
+                (0.15, 0.35, 0.45)  # Lighter scale color
+            )
+            created_actors.append(sc["actor"])
+
+        unreal.log(f"🌊 Water Demon created with {len(created_actors)} components")
+
+        return {
+            "message": f"Created {name} (Water Demon)",
+            "name": name,
+            "type": "water demon",
+            "actors": created_actors
+        }
+
+    def _create_rock_demon(self, parsed: dict) -> dict:
+        """Create a Rock Demon - heavily armored, stone-like"""
+        name = parsed.get("name") or "RockDemon"
+        props = parsed["properties"]
+        position = props["position"]
+        scale = props["size"] or 3.0
+
+        unreal.log("🪨 Creating Rock Demon...")
+
+        created_actors = []
+
+        # Body (massive, bulky)
+        body_scale = (scale * 1.2, scale * 1, scale * 2)
+        body_pos = position
+        body = self._create_composite_cube(
+            f"{name}_Body", body_pos, body_scale,
+            (0.3, 0.28, 0.25)  # Gray-brown stone
+        )
+        created_actors.append(body["actor"])
+
+        # Stone armor plates
+        for i in range(8):
+            plate_scale = (scale * 0.4, scale * 0.15, scale * 0.5)
+            angle = (2 * math.pi * i) / 8
+            plate_pos = (
+                position[0] + scale * 0.65 * math.cos(angle),
+                position[1] + scale * 0.65 * math.sin(angle),
+                position[2] + scale * 0.5 + (i % 2) * scale * 0.5
+            )
+            plate = self._create_composite_cube(
+                f"{name}_Armor_{i}", plate_pos, plate_scale,
+                (0.35, 0.32, 0.3)  # Lighter stone armor
+            )
+            created_actors.append(plate["actor"])
+
+        # Head (helmet-like)
+        head_scale = (scale * 0.7, scale * 0.7, scale * 0.7)
+        head_pos = (position[0], position[1], position[2] + scale * 1.4)
+        head = self._create_composite_cube(
+            f"{name}_Head", head_pos, head_scale,
+            (0.3, 0.28, 0.25)
+        )
+        created_actors.append(head["actor"])
+
+        # Glowing eyes from within armor
+        eye_scale = (scale * 0.12, scale * 0.1, scale * 0.12)
+        eye_pos_l = (head_pos[0] - scale * 0.2, head_pos[1] - scale * 0.3, head_pos[2] + scale * 0.2)
+        eye_pos_r = (head_pos[0] + scale * 0.2, head_pos[1] - scale * 0.3, head_pos[2] + scale * 0.2)
+        eye_l = self._create_composite_cube(f"{name}_Eye_L", eye_pos_l, eye_scale, (0.8, 0.2, 0.1))
+        eye_r = self._create_composite_cube(f"{name}_Eye_R", eye_pos_r, eye_scale, (0.8, 0.2, 0.1))
+        created_actors.append(eye_l["actor"])
+        created_actors.append(eye_r["actor"])
+
+        # Massive arms
+        arm_scale = (scale * 0.5, scale * 0.5, scale * 1.2)
+        arm_pos_l = (position[0] - scale * 0.9, position[1], position[2] + scale * 0.3)
+        arm_pos_r = (position[0] + scale * 0.9, position[1], position[2] + scale * 0.3)
+        arm_l = self._create_composite_cube(f"{name}_Arm_L", arm_pos_l, arm_scale, (0.3, 0.28, 0.25))
+        arm_r = self._create_composite_cube(f"{name}_Arm_R", arm_pos_r, arm_scale, (0.3, 0.28, 0.25))
+        created_actors.append(arm_l["actor"])
+        created_actors.append(arm_r["actor"])
+
+        # Spikes on armor
+        for i in range(4):
+            spike_scale = (scale * 0.1, scale * 0.3, scale * 0.1)
+            spike_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.5,
+                position[1] + scale * 0.55,
+                position[2] + scale * 0.8 + (i // 2) * scale * 0.3
+            )
+            spike = self._create_composite_cube(
+                f"{name}_Spike_{i}", spike_pos, spike_scale,
+                (0.25, 0.23, 0.2)
+            )
+            created_actors.append(spike["actor"])
+
+        # Legs (thick, pillar-like)
+        leg_scale = (scale * 0.4, scale * 0.4, scale * 0.8)
+        leg_pos_l = (position[0] - scale * 0.4, position[1], position[2] - scale * 1)
+        leg_pos_r = (position[0] + scale * 0.4, position[1], position[2] - scale * 1)
+        leg_l = self._create_composite_cube(f"{name}_Leg_L", leg_pos_l, leg_scale, (0.3, 0.28, 0.25))
+        leg_r = self._create_composite_cube(f"{name}_Leg_R", leg_pos_r, leg_scale, (0.3, 0.28, 0.25))
+        created_actors.append(leg_l["actor"])
+        created_actors.append(leg_r["actor"])
+
+        unreal.log(f"🪨 Rock Demon created with {len(created_actors)} components")
+
+        return {
+            "message": f"Created {name} (Rock Demon)",
+            "name": name,
+            "type": "rock demon",
+            "actors": created_actors
+        }
+
+    def _create_wood_demon(self, parsed: dict) -> dict:
+        """Create a Wood Demon - bark-like camouflage, vine features"""
+        name = parsed.get("name") or "WoodDemon"
+        props = parsed["properties"]
+        position = props["position"]
+        scale = props["size"] or 2.0
+
+        unreal.log("🌲 Creating Wood Demon...")
+
+        created_actors = []
+
+        # Body (bark-like texture)
+        body_scale = (scale * 0.6, scale * 0.5, scale * 1.8)
+        body_pos = position
+        body = self._create_composite_cube(
+            f"{name}_Body", body_pos, body_scale,
+            (0.25, 0.2, 0.12)  # Dark brown bark
+        )
+        created_actors.append(body["actor"])
+
+        # Head (twisted, root-like)
+        head_scale = (scale * 0.35, scale * 0.35, scale * 0.4)
+        head_pos = (position[0], position[1], position[2] + scale * 1.1)
+        head = self._create_composite_cube(
+            f"{name}_Head", head_pos, head_scale,
+            (0.28, 0.22, 0.15)
+        )
+        created_actors.append(head["actor"])
+
+        # Glowing green eyes
+        eye_scale = (scale * 0.08, scale * 0.06, scale * 0.08)
+        eye_pos_l = (head_pos[0] - scale * 0.12, head_pos[1] - scale * 0.15, head_pos[2] + scale * 0.15)
+        eye_pos_r = (head_pos[0] + scale * 0.12, head_pos[1] - scale * 0.15, head_pos[2] + scale * 0.15)
+        eye_l = self._create_composite_cube(f"{name}_Eye_L", eye_pos_l, eye_scale, (0.3, 0.8, 0.2))
+        eye_r = self._create_composite_cube(f"{name}_Eye_R", eye_pos_r, eye_scale, (0.3, 0.8, 0.2))
+        created_actors.append(eye_l["actor"])
+        created_actors.append(eye_r["actor"])
+
+        # Vine-like appendages (arms)
+        for side in [-1, 1]:
+            for i in range(3):  # 3 segments per vine arm
+                vine_scale = (scale * 0.08, scale * 0.25, scale * 0.08)
+                vine_pos = (
+                    position[0] + side * (scale * 0.4 + i * scale * 0.15),
+                    position[1],
+                    position[2] + scale * 0.8 - i * scale * 0.2
+                )
+                vine = self._create_composite_cube(
+                    f"{name}_VineArm_{'L' if side < 0 else 'R'}_{i}", vine_pos, vine_scale,
+                    (0.3, 0.35, 0.15)  # Greenish-brown vines
+                )
+                created_actors.append(vine["actor"])
+
+        # Root-like legs
+        for i in range(4):
+            root_scale = (scale * 0.15, scale * 0.15, scale * 0.6)
+            angle = (2 * math.pi * i) / 4
+            root_pos = (
+                position[0] + scale * 0.3 * math.cos(angle),
+                position[1] + scale * 0.3 * math.sin(angle),
+                position[2] - scale * 0.7
+            )
+            root = self._create_composite_cube(
+                f"{name}_Root_{i}", root_pos, root_scale,
+                (0.25, 0.2, 0.12)
+            )
+            created_actors.append(root["actor"])
+
+        # Leaves/camouflage
+        for i in range(8):
+            leaf_scale = (scale * 0.15, scale * 0.02, scale * 0.12)
+            leaf_pos = (
+                position[0] + (i % 3 - 1) * scale * 0.4,
+                position[1] + ((i // 3) % 3 - 1) * scale * 0.4,
+                position[2] + scale * 0.5 + (i % 2) * scale * 0.5
+            )
+            leaf = self._create_composite_cube(
+                f"{name}_Leaf_{i}", leaf_pos, leaf_scale,
+                (0.2, 0.6, 0.15)  # Green leaves
+            )
+            created_actors.append(leaf["actor"])
+
+        # Bark plates (armor)
+        for i in range(6):
+            plate_scale = (scale * 0.25, scale * 0.08, scale * 0.35)
+            plate_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.35,
+                position[1] + scale * 0.27,
+                position[2] + (i // 2) * scale * 0.4
+            )
+            plate = self._create_composite_cube(
+                f"{name}_BarkPlate_{i}", plate_pos, plate_scale,
+                (0.3, 0.25, 0.18)
+            )
+            created_actors.append(plate["actor"])
+
+        unreal.log(f"🌲 Wood Demon created with {len(created_actors)} components")
+
+        return {
+            "message": f"Created {name} (Wood Demon)",
+            "name": name,
+            "type": "wood demon",
+            "actors": created_actors
+        }
+
+    def _create_mind_demon(self, parsed: dict) -> dict:
+        """Create a Mind Demon - small, intelligent, psychic glow"""
+        name = parsed.get("name") or "MindDemon"
+        props = parsed["properties"]
+        position = props["position"]
+        scale = props["size"] or 1.2
+
+        unreal.log("🧠 Creating Mind Demon...")
+
+        created_actors = []
+
+        # Body (slender, humanoid but smaller)
+        body_scale = (scale * 0.35, scale * 0.2, scale * 0.9)
+        body_pos = position
+        body = self._create_composite_cube(
+            f"{name}_Body", body_pos, body_scale,
+            (0.85, 0.82, 0.78)  # Pale, almost white skin
+        )
+        created_actors.append(body["actor"])
+
+        # Head (large, elongated)
+        head_scale = (scale * 0.25, scale * 0.25, scale * 0.3)
+        head_pos = (position[0], position[1], position[2] + scale * 0.6)
+        head = self._create_composite_cube(
+            f"{name}_Head", head_pos, head_scale,
+            (0.85, 0.82, 0.78)
+        )
+        created_actors.append(head["actor"])
+
+        # Large, glowing purple eyes (psychic)
+        eye_scale = (scale * 0.08, scale * 0.06, scale * 0.08)
+        eye_pos_l = (head_pos[0] - scale * 0.08, head_pos[1] - scale * 0.12, head_pos[2] + scale * 0.1)
+        eye_pos_r = (head_pos[0] + scale * 0.08, head_pos[1] - scale * 0.12, head_pos[2] + scale * 0.1)
+        eye_l = self._create_composite_cube(f"{name}_Eye_L", eye_pos_l, eye_scale, (0.6, 0.2, 0.8))
+        eye_r = self._create_composite_cube(f"{name}_Eye_R", eye_pos_r, eye_scale, (0.6, 0.2, 0.8))
+        created_actors.append(eye_l["actor"])
+        created_actors.append(eye_r["actor"])
+
+        # Psychic aura (glowing rings around head)
+        for i in range(3):
+            aura_scale = (scale * (0.4 + i * 0.15), scale * 0.02, scale * (0.4 + i * 0.15))
+            aura_pos = (position[0], position[1], position[2] + scale * 0.75 + i * scale * 0.05)
+            aura = self._create_composite_cube(
+                f"{name}_Aura_{i}", aura_pos, aura_scale,
+                (0.7, 0.3, 0.9, 0.5)  # Purple glow, semi-transparent
+            )
+            created_actors.append(aura["actor"])
+
+        # Robe/cloak
+        robe_scale = (scale * 0.5, scale * 0.08, scale * 1)
+        robe_pos = (position[0], position[1], position[2] + scale * 0.3)
+        robe = self._create_composite_cube(
+            f"{name}_Robe", robe_pos, robe_scale,
+            (0.3, 0.25, 0.2)  # Dark robe
+        )
+        created_actors.append(robe["actor"])
+
+        # Arms (slender)
+        arm_scale = (scale * 0.08, scale * 0.08, scale * 0.5)
+        arm_pos_l = (position[0] - scale * 0.25, position[1], position[2] + scale * 0.4)
+        arm_pos_r = (position[0] + scale * 0.25, position[1], position[2] + scale * 0.4)
+        arm_l = self._create_composite_cube(f"{name}_Arm_L", arm_pos_l, arm_scale, (0.85, 0.82, 0.78))
+        arm_r = self._create_composite_cube(f"{name}_Arm_R", arm_pos_r, arm_scale, (0.85, 0.82, 0.78))
+        created_actors.append(arm_l["actor"])
+        created_actors.append(arm_r["actor"])
+
+        # Psychic tendrils (floating)
+        for i in range(6):
+            tendril_scale = (scale * 0.03, scale * 0.2, scale * 0.03)
+            angle = (2 * math.pi * i) / 6
+            tendril_pos = (
+                position[0] + scale * 0.5 * math.cos(angle),
+                position[1] + scale * 0.5 * math.sin(angle),
+                position[2] + scale * 0.5
+            )
+            tendril = self._create_composite_cube(
+                f"{name}_Tendril_{i}", tendril_pos, tendril_scale,
+                (0.8, 0.4, 1)  # Lavender psychic energy
+            )
+            created_actors.append(tendril["actor"])
+
+        unreal.log(f"🧠 Mind Demon created with {len(created_actors)} components")
+
+        return {
+            "message": f"Created {name} (Mind Demon)",
+            "name": name,
+            "type": "mind demon",
+            "actors": created_actors
+        }
+
+    def _create_hashak(self, parsed: dict) -> dict:
+        """Create a Hashak - the most powerful, giant demon"""
+        name = parsed.get("name") or "Hashak"
+        props = parsed["properties"]
+        position = props["position"]
+        scale = props["size"] or 5.0
+
+        unreal.log("👹 Creating Hashak...")
+
+        created_actors = []
+
+        # Body (massive, terrifying)
+        body_scale = (scale * 2, scale * 1.8, scale * 3.5)
+        body_pos = position
+        body = self._create_composite_cube(
+            f"{name}_Body", body_pos, body_scale,
+            (0.15, 0.12, 0.1)  # Dark, charred appearance
+        )
+        created_actors.append(body["actor"])
+
+        # Thick armor plates
+        for i in range(12):
+            plate_scale = (scale * 0.8, scale * 0.2, scale * 1)
+            angle = (2 * math.pi * i) / 12
+            plate_pos = (
+                position[0] + scale * 1.1 * math.cos(angle),
+                position[1] + scale * 1.1 * math.sin(angle),
+                position[2] + scale * 1 + (i % 3) * scale * 0.7
+            )
+            plate = self._create_composite_cube(
+                f"{name}_Armor_{i}", plate_pos, plate_scale,
+                (0.18, 0.15, 0.12)  # Dark armor
+            )
+            created_actors.append(plate["actor"])
+
+        # Massive head
+        head_scale = (scale * 1.2, scale * 1, scale * 1.2)
+        head_pos = (position[0], position[1], position[2] + scale * 2.5)
+        head = self._create_composite_cube(
+            f"{name}_Head", head_pos, head_scale,
+            (0.15, 0.12, 0.1)
+        )
+        created_actors.append(head["actor"])
+
+        # Multiple glowing eyes (horrific)
+        for row in range(3):
+            for col in range(3):
+                eye_scale = (scale * 0.15, scale * 0.1, scale * 0.15)
+                eye_pos = (
+                    head_pos[0] + (col - 1) * scale * 0.3,
+                    head_pos[1] - scale * 0.55,
+                    head_pos[2] + scale * 0.3 + row * scale * 0.25
+                )
+                eye = self._create_composite_cube(
+                    f"{name}_Eye_{row}_{col}", eye_pos, eye_scale,
+                    (1, 0.1, 0)  # Burning red
+                )
+                created_actors.append(eye["actor"])
+
+        # Massive, spiked arms
+        arm_scale = (scale * 0.8, scale * 0.8, scale * 2)
+        arm_pos_l = (position[0] - scale * 1.5, position[1], position[2] + scale * 0.8)
+        arm_pos_r = (position[0] + scale * 1.5, position[1], position[2] + scale * 0.8)
+        arm_l = self._create_composite_cube(f"{name}_Arm_L", arm_pos_l, arm_scale, (0.15, 0.12, 0.1))
+        arm_r = self._create_composite_cube(f"{name}_Arm_R", arm_pos_r, arm_scale, (0.15, 0.12, 0.1))
+        created_actors.append(arm_l["actor"])
+        created_actors.append(arm_r["actor"])
+
+        # Hands (massive, clawed)
+        hand_scale = (scale * 1, scale * 0.4, scale * 0.8)
+        hand_pos_l = (arm_pos_l[0], arm_pos_l[1], arm_pos_l[2] - scale * 1.2)
+        hand_pos_r = (arm_pos_r[0], arm_pos_r[1], arm_pos_r[2] - scale * 1.2)
+        hand_l = self._create_composite_cube(f"{name}_Hand_L", hand_pos_l, hand_scale, (0.15, 0.12, 0.1))
+        hand_r = self._create_composite_cube(f"{name}_Hand_R", hand_pos_r, hand_scale, (0.15, 0.12, 0.1))
+        created_actors.append(hand_l["actor"])
+        created_actors.append(hand_r["actor"])
+
+        # Claws
+        for i in range(5):
+            claw_scale = (scale * 0.2, scale * 0.3, scale * 0.2)
+            claw_pos_l = (hand_pos_l[0] + (i - 2) * scale * 0.2, hand_pos_l[1] - scale * 0.3, hand_pos_l[2])
+            claw_pos_r = (hand_pos_r[0] + (i - 2) * scale * 0.2, hand_pos_r[1] - scale * 0.3, hand_pos_r[2])
+            claw_l = self._create_composite_cube(f"{name}_Claw_L_{i}", claw_pos_l, claw_scale, (0.12, 0.1, 0.08))
+            claw_r = self._create_composite_cube(f"{name}_Claw_R_{i}", claw_pos_r, claw_scale, (0.12, 0.1, 0.08))
+            created_actors.append(claw_l["actor"])
+            created_actors.append(claw_r["actor"])
+
+        # Massive spikes
+        for i in range(8):
+            spike_scale = (scale * 0.15, scale * 0.8, scale * 0.15)
+            angle = (2 * math.pi * i) / 8
+            spike_pos = (
+                position[0] + scale * 0.9 * math.cos(angle),
+                position[1] + scale * 0.9 * math.sin(angle),
+                position[2] + scale * 2
+            )
+            spike = self._create_composite_cube(
+                f"{name}_Spike_{i}", spike_pos, spike_scale,
+                (0.12, 0.1, 0.08)
+            )
+            created_actors.append(spike["actor"])
+
+        # Pillar-like legs
+        leg_scale = (scale * 0.8, scale * 0.8, scale * 1.5)
+        leg_pos_l = (position[0] - scale * 0.7, position[1], position[2] - scale * 2)
+        leg_pos_r = (position[0] + scale * 0.7, position[1], position[2] - scale * 2)
+        leg_l = self._create_composite_cube(f"{name}_Leg_L", leg_pos_l, leg_scale, (0.15, 0.12, 0.1))
+        leg_r = self._create_composite_cube(f"{name}_Leg_R", leg_pos_r, leg_scale, (0.15, 0.12, 0.1))
+        created_actors.append(leg_l["actor"])
+        created_actors.append(leg_r["actor"])
+
+        unreal.log(f"👹 Hashak created with {len(created_actors)} components")
+
+        return {
+            "message": f"Created {name} (Hashak)",
+            "name": name,
+            "type": "hashak",
+            "actors": created_actors
+        }
+
+    def _create_coreling_generic(self, parsed: dict) -> dict:
+        """Create a generic Coreling"""
+        name = parsed.get("name") or "Coreling"
+        props = parsed["properties"]
+        position = props["position"]
+        scale = props["size"] or 1.5
+
+        unreal.log("👿 Creating Coreling...")
+
+        created_actors = []
+
+        # Body
+        body_scale = (scale * 0.5, scale * 0.4, scale * 1)
+        body_pos = position
+        body = self._create_composite_cube(
+            f"{name}_Body", body_pos, body_scale,
+            (0.2, 0.15, 0.12)  # Dark demon skin
+        )
+        created_actors.append(body["actor"])
+
+        # Head
+        head_scale = (scale * 0.3, scale * 0.3, scale * 0.3)
+        head_pos = (position[0], position[1], position[2] + scale * 0.65)
+        head = self._create_composite_cube(f"{name}_Head", head_pos, head_scale, (0.2, 0.15, 0.12))
+        created_actors.append(head["actor"])
+
+        # Glowing eyes
+        eye_scale = (scale * 0.06, scale * 0.06, scale * 0.06)
+        eye_pos_l = (head_pos[0] - scale * 0.1, head_pos[1] - scale * 0.15, head_pos[2] + scale * 0.1)
+        eye_pos_r = (head_pos[0] + scale * 0.1, head_pos[1] - scale * 0.15, head_pos[2] + scale * 0.1)
+        eye_l = self._create_composite_cube(f"{name}_Eye_L", eye_pos_l, eye_scale, (1, 0.2, 0))
+        eye_r = self._create_composite_cube(f"{name}_Eye_R", eye_pos_r, eye_scale, (1, 0.2, 0))
+        created_actors.append(eye_l["actor"])
+        created_actors.append(eye_r["actor"])
+
+        # Magic aura
+        for i in range(4):
+            aura_scale = (scale * 0.4, scale * 0.02, scale * 0.4)
+            aura_pos = (position[0], position[1], position[2] + scale * 0.5 + i * scale * 0.15)
+            aura = self._create_composite_cube(
+                f"{name}_Aura_{i}", aura_pos, aura_scale,
+                (0.8, 0.2, 0)  # Red magic glow
+            )
+            created_actors.append(aura["actor"])
+
+        unreal.log(f"👿 Coreling created with {len(created_actors)} components")
+
+        return {
+            "message": f"Created {name} (Coreling)",
+            "name": name,
+            "type": "coreling",
             "actors": created_actors
         }
 
@@ -2955,6 +3699,7 @@ for i, example in enumerate(examples, 1):
 unreal.log(f"\n📚 CREATION TYPES:\n")
 creation_types = [
     "🐉 Creatures: dragon, wolf, eagle, fish, insect, unicorn, phoenix, golem",
+    "👹 Corelings (The Painted Man): wind demon, fire demon, water demon, rock demon, wood demon, mind demon, hashak",
     "🚀 Vehicles: spaceship, car, motorcycle, boat, airplane, helicopter, tank",
     "🏠 Architecture: building, castle, tower, bridge, fountain, monument",
     "🌳 Nature: tree, mountain, volcano, river, cloud, terrain",
@@ -2966,6 +3711,14 @@ for ct in creation_types:
 
 unreal.log(f"\n💡 MORE EXAMPLES:\n")
 examples_list = [
+    "create(\"a wind demon soaring through the sky\")",
+    "create(\"a fire demon engulfed in flames\")",
+    "create(\"a water demon rising from the depths\")",
+    "create(\"a rock demon with stone armor\")",
+    "create(\"a wood demon camouflaged in the forest\")",
+    "create(\"a mind demon with psychic aura\")",
+    "create(\"a hashak - the most powerful demon\")",
+    "create(\"an army of corelings attacking\")",
     "create(\"5 dragons in a circle\")",
     "create(\"a pack of wolves howling at the moon\")",
     "create(\"a majestic eagle with golden feathers\")",
