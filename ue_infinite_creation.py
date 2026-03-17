@@ -13,6 +13,7 @@ import tempfile
 import re
 import math
 import sys
+from typing import Optional, Tuple, List, Dict, Any
 
 sys.path.insert(0, '/Volumes/SERENADA_2/_elliott/Unreal Projects/UEAI-Plugin-Test/Plugins/UEAIPlugin/Content/Python')
 
