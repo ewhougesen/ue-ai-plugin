@@ -25,11 +25,13 @@ class Settings(BaseSettings):
     ANTHROPIC_MAX_RETRIES: int = 2
     ANTHROPIC_STREAMING: str = "1"
 
-    # AI Service Keys (Meshy, CSM, Kaedim, etc.)
+    # AI Service Keys (Meshy, CSM, Kaedim, Stability, etc.)
     MESHY_API_KEY: Optional[str] = None
     CSM_API_KEY: Optional[str] = None
     KAEDEM_API_KEY: Optional[str] = None
     TRIPOSR_API_KEY: Optional[str] = None
+    STABILITY_API_KEY: Optional[str] = None
+    OPENAI_API_KEY: Optional[str] = None
 
     # Server
     GRPC_PORT: int = 50051

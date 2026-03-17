@@ -69,12 +69,13 @@ async def chat(request: dict):
 
 @api_router.post("/api/generate")
 async def generate_asset(request: dict):
-    """Generate asset using AI services"""
+    """Generate asset using AI services (Meshy, CSM, Stability AI, etc.)"""
     if not asset_manager:
         return {"error": "Service not initialized"}
 
     prompt = request.get("prompt", "")
     asset_type = request.get("asset_type", "MESH")
+    service = request.get("service", "auto")
     parameters = request.get("parameters", {})
 
     if not prompt:
@@ -82,16 +83,25 @@ async def generate_asset(request: dict):
 
     log.info("asset_generation_request",
              asset_type=asset_type,
+             service=service,
              prompt=prompt[:100])
 
     try:
         result = await asset_manager.generate_asset(
             prompt=prompt,
             asset_type=asset_type,
-            service="test",  # Will be replaced with actual service
+            service=service,
             parameters=parameters
         )
-        return {"success": True, "result": result}
+
+        if "error" in result:
+            return {"error": result["error"]}
+
+        return {
+            "success": True,
+            "result": result,
+            "message": f"Generated {asset_type} using {result.get('service', service)}"
+        }
     except Exception as e:
         log.error("asset_generation_error", error=str(e))
         return {"error": str(e)}
