@@ -1,4 +1,4 @@
-"""Claude AI service integration"""
+"""Claude AI service integration with z.ai"""
 import asyncio
 from typing import AsyncIterator, Optional
 from anthropic import AsyncAnthropic
@@ -11,12 +11,19 @@ log = structlog.get_logger(__name__)
 
 
 class ClaudeService:
-    """Service for interacting with Claude API"""
+    """Service for interacting with Claude API through z.ai"""
 
     def __init__(self):
-        self.client = AsyncAnthropic(api_key=settings.CLAUDE_API_KEY)
+        # Initialize with z.ai configuration
+        self.client = AsyncAnthropic(
+            api_key=settings.ANTHROPIC_AUTH_TOKEN,
+            base_url=settings.ANTHROPIC_BASE_URL,
+            timeout=int(settings.API_TIMEOUT_MS / 1000)
+        )
         self.conversation_history: dict[str, list[dict]] = {}
-        log.info("claude_service_initialized")
+        log.info("claude_service_initialized",
+                 base_url=settings.ANTHROPIC_BASE_URL,
+                 model=settings.get_claude_model())
 
     async def process_request(
         self,
@@ -43,9 +50,15 @@ class ClaudeService:
         messages.append({"role": "user", "content": user_message})
 
         try:
-            # Stream response from Claude
+            # Stream response from Claude through z.ai
+            model = settings.get_claude_model()
+            log.debug("starting_claude_request",
+                     session_id=session_id,
+                     model=model,
+                     message_count=len(messages))
+
             async with self.client.messages.stream(
-                model=settings.CLAUDE_MODEL,
+                model=model,
                 max_tokens=settings.CLAUDE_MAX_TOKENS,
                 system=system_message,
                 messages=messages
@@ -80,7 +93,10 @@ class ClaudeService:
                 }
 
         except Exception as e:
-            log.error("claude_api_error", error=str(e))
+            log.error("claude_api_error",
+                     session_id=session_id,
+                     error=str(e),
+                     error_type=type(e).__name__)
             raise
 
     def _build_system_message(self, context_frame: Optional[dict]) -> str:
@@ -103,7 +119,8 @@ When the user makes requests:
 Respond concisely and focus on being helpful."""
 
         if context_frame:
-            base_message += f"\n\nCurrent viewport contains {len(context_frame.get('objects', []))} objects."
+            object_count = len(context_frame.get('objects', []))
+            base_message += f"\n\nCurrent viewport contains {object_count} objects."
 
         return base_message
 
@@ -120,7 +137,9 @@ Respond concisely and focus on being helpful."""
             objects = context_frame["objects"]
             message += f"\n\nScene objects ({len(objects)}):"
             for obj in objects[:10]:  # Limit to first 10
-                message += f"\n- {obj.get('name', 'Unknown')} ({obj.get('type', 'Object')})"
+                obj_name = obj.get('name', 'Unknown')
+                obj_type = obj.get('type', 'Object')
+                message += f"\n- {obj_name} ({obj_type})"
 
         if context_data:
             relevant_data = {k: v for k, v in context_data.items()
