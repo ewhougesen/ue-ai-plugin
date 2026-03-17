@@ -1,0 +1,167 @@
+syntax = "proto3";
+
+package ue_ai;
+
+// Main service for UE-AI communication
+service UEAIPlugin {
+    // Initialize connection with UE plugin
+    rpc Connect(ConnectRequest) returns (ConnectResponse);
+
+    // Send viewport frame for analysis
+    rpc SendViewportFrame(ViewportFrame) returns (FrameAnalysis);
+
+    // Process natural language request
+    rpc ProcessRequest(ProcessRequest) returns (stream ProcessResponse);
+
+    // Execute action in UE
+    rpc ExecuteAction(ActionRequest) returns (ActionResponse);
+
+    // Get asset from AI service
+    rpc GenerateAsset(AssetRequest) returns (stream AssetProgress);
+
+    // Health check
+    rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// Connection
+message ConnectRequest {
+    string ue_version = 1;
+    string plugin_version = 2;
+    string machine_id = 3;
+}
+
+message ConnectResponse {
+    bool success = 1;
+    string session_id = 2;
+    string server_version = 3;
+}
+
+// Viewport frame for AI vision
+message ViewportFrame {
+    bytes image_data = 1;  // JPEG or PNG compressed
+    int32 width = 2;
+    int32 height = 3;
+    double timestamp = 4;
+    string camera_name = 5;
+    // Additional viewport info
+    repeated ViewportObject objects = 6;
+}
+
+message ViewportObject {
+    string name = 1;
+    string type = 2;
+    Vector3D location = 3;
+    Vector3D rotation = 4;
+    Vector3D scale = 5;
+}
+
+message Vector3D {
+    double x = 1;
+    double y = 2;
+    double z = 3;
+}
+
+message FrameAnalysis {
+    repeated DetectedObject detected_objects = 1;
+    string scene_description = 2;
+    repeated string suggested_actions = 3;
+}
+
+message DetectedObject {
+    string name = 1;
+    string type = 2;
+    double confidence = 3;
+    BoundingBox bounds = 4;
+}
+
+message BoundingBox {
+    Vector3D min = 1;
+    Vector3D max = 2;
+}
+
+// Request processing
+message ProcessRequest {
+    string session_id = 1;
+    string user_input = 2;
+    ViewportFrame context_frame = 3;
+    map<string, string> context_data = 4;
+}
+
+message ProcessResponse {
+    enum ResponseType {
+        THINKING = 0;
+        QUESTION = 1;
+        ACTION = 2;
+        ASSET_GENERATION = 3;
+        COMPLETE = 4;
+        ERROR = 5;
+    }
+
+    ResponseType type = 1;
+    string content = 2;
+    repeated Action actions = 3;
+    string asset_id = 4;
+    double progress = 5;
+}
+
+message Action {
+    enum ActionType {
+        CREATE_OBJECT = 0;
+        MODIFY_OBJECT = 1;
+        DELETE_OBJECT = 2;
+        CREATE_MATERIAL = 3;
+        MODIFY_MATERIAL = 4;
+        IMPORT_ASSET = 5;
+        CAMERA_MOVE = 6;
+        SELECTION = 7;
+    }
+
+    ActionType type = 1;
+    string target = 2;  // Object name or path
+    map<string, string> parameters = 3;
+}
+
+// Action execution
+message ActionRequest {
+    string session_id = 1;
+    Action action = 2;
+}
+
+message ActionResponse {
+    bool success = 1;
+    string message = 2;
+    map<string, string> result_data = 3;
+}
+
+// Asset generation
+message AssetRequest {
+    string session_id = 1;
+    enum AssetType {
+        MESH = 0;
+        MATERIAL = 1;
+        TEXTURE = 2;
+        ANIMATION = 3;
+        LEVEL = 4;
+    }
+    AssetType type = 2;
+    string prompt = 3;
+    map<string, string> parameters = 4;
+    string preferred_service = 5;  // Meshy, CSM, Kaedim, etc.
+}
+
+message AssetProgress {
+    double progress = 1;
+    string status = 2;
+    bytes asset_data = 3;
+    string asset_format = 4;  // FBX, OBJ, GLTF, etc.
+    repeated string warnings = 5;
+}
+
+// Health check
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+    bool healthy = 1;
+    string version = 2;
+    repeated string active_services = 3;
+}

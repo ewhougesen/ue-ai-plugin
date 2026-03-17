@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ue-ai-backend
+    ports:
+      - "50051:50051"  # gRPC port
+      - "8000:8000"    # HTTP API (for health checks)
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=debug
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - MESHY_API_KEY=${MESHY_API_KEY}
+      - CSM_API_KEY=${CSM_API_KEY}
+      - KAEDEM_API_KEY=${KAEDEM_API_KEY}
+    volumes:
+      - ./backend:/app
+      - ./backend/logs:/app/logs
+      - ./backend/cache:/app/cache
+    restart: unless-stopped
+    networks:
+      - ue-ai-network
+
+networks:
+  ue-ai-network:
+    driver: bridge
