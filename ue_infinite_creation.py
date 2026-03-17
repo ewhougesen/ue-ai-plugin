@@ -319,7 +319,7 @@ class InfiniteCreationEngine:
         body_pos = (position[0], position[1], position[2] + scale * 2)
         body = self._create_composite_cube(
             f"{name}_Body", body_pos, body_scale,
-            props.get("color", (0.8, 0.2, 0.1))
+            props.get("color", (0.8, 0.2, 0.1)))
         created_actors.append(body["actor"])
 
         # Neck
@@ -327,7 +327,7 @@ class InfiniteCreationEngine:
         neck_pos = (position[0], position[1], position[2] + scale * 4)
         neck = self._create_composite_cube(
             f"{name}_Neck", neck_pos, neck_scale,
-            props.get("color", (0.8, 0.2, 0.1))
+            props.get("color", (0.8, 0.2, 0.1)))
         created_actors.append(neck["actor"])
 
         # Head
@@ -645,7 +645,7 @@ class InfiniteCreationEngine:
         eye_color = self._extract_color_from_context(parsed["original"], "blue")
         eye_scale = (scale * 0.05, scale * 0.05, scale * 0.05)
         eye_pos_l = (head_pos[0] - scale * 0.1, head_pos[1], head_pos[2] + scale * 0.18)
-        eye_pos_r = (head_pos[0] + scale * 0.1, head_pos[1], head_pos[2] + scale * 0.18])
+        eye_pos_r = (head_pos[0] + scale * 0.1, head_pos[1], head_pos[2] + scale * 0.18)
 
         eye_l = self._create_composite_cube(
             f"{name}_Eye_L", eye_pos_l, eye_scale, eye_color
