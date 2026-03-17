@@ -13,43 +13,6 @@ BACKEND_HOST = "localhost"
 BACKEND_PORT = 8000
 
 
-class UEAIChatPanel(unreal.ToolMenuEntryScript):
-    """
-    Custom editor panel for AI chat
-    """
-
-    def __init__(self):
-        self.chat_history = []
-        self.is_processing = False
-
-    def execute(self, context):
-        """Called when menu item is clicked"""
-        unreal.log("Opening UE AI Chat Panel...")
-        self.show_chat_window()
-
-    def show_chat_window(self):
-        """Show the chat window"""
-        try:
-            # For now, show in Output Log with a prompt
-            unreal.log("=" * 60)
-            unreal.log("     UE AI CHAT PANEL")
-            unreal.log("=" * 60)
-            unreal.log("Backend connected: http://{}:{}".format(BACKEND_HOST, BACKEND_PORT))
-            unreal.log("")
-            unreal.log("USAGE:")
-            unreal.log("  ai_chat.send('your message here')")
-            unreal.log("  ai_chat.history()")
-            unreal.log("  ai_chat.clear()")
-            unreal.log("")
-            unreal.log("EXAMPLES:")
-            unreal.log("  ai_chat.send('Create a cube at 0,0,100')")
-            unreal.log("  ai_chat.send('Make a red material')")
-            unreal.log("=" * 60)
-
-        except Exception as e:
-            unreal.log_error(f"Error showing chat window: {str(e)}")
-
-
 class AIChatManager:
     """Manages AI chat functionality"""
 
@@ -72,33 +35,31 @@ class AIChatManager:
         unreal.log(f"[You]: {message}")
 
         try:
-            # Prepare request
+            # Prepare request - use correct API format
             request_data = {
-                "message": message,
-                "context": {
+                "user_input": message,
+                "context_data": {
                     "project": unreal.SystemLibrary.get_project_name(),
-                    "engine_version": unreal.SystemConfiguration.get_engine_version()
+                    "engine_version": "5.5"
                 }
             }
 
-            # Connect to backend
+            # Connect to backend - correct endpoint
             conn = http.client.HTTPConnection(BACKEND_HOST, BACKEND_PORT, timeout=10)
             headers = {"Content-type": "application/json"}
 
-            conn.request("POST", "/api/chat", json.dumps(request_data), headers)
+            conn.request("POST", "/api/api/chat", json.dumps(request_data), headers)
             response = conn.getresponse()
 
             if response.status == 200:
                 data = response.read().decode("utf-8")
                 result = json.loads(data)
 
-                # Extract response
-                if "response" in result:
-                    ai_message = result["response"]
-                elif "message" in result:
-                    ai_message = result["message"]
-                elif "choices" in result and len(result["choices"]) > 0:
-                    ai_message = result["choices"][0].get("message", {}).get("content", str(result))
+                # Extract response from the correct format
+                if result.get("success") and "full_response" in result:
+                    ai_message = result["full_response"]
+                elif "responses" in result and len(result["responses"]) > 0:
+                    ai_message = result["responses"][-1].get("content", str(result))
                 else:
                     ai_message = str(result)
 
@@ -113,11 +74,7 @@ class AIChatManager:
                 return f"Error: {error_msg}"
 
         except ConnectionRefusedError:
-            error_msg = "Cannot connect to backend. Make sure Docker is running: docker-compose up"
-            unreal.log_error(f"[AI Error]: {error_msg}")
-            return error_msg
-        except http.client.HTTPException as e:
-            error_msg = f"HTTP Error: {str(e)}"
+            error_msg = "Cannot connect to backend. Make sure Docker is running."
             unreal.log_error(f"[AI Error]: {error_msg}")
             return error_msg
         except Exception as e:
@@ -147,80 +104,42 @@ class AIChatManager:
 
     def create_cube(self, name="Cube", location=(0, 0, 0)):
         """Create a cube in the scene"""
-        import ue_ai_plugin
-        result = ue_ai_plugin.create_cube(name, location)
-        unreal.log(f"Created cube: {result}")
-        return result
+        try:
+            actor_loc = unreal.Vector(location[0], location[1], location[2])
+            actor = unreal.EditorLevelLibrary.spawn_actor_from_class(
+                unreal.StaticMeshActor,
+                actor_loc
+            )
+            actor.set_actor_label(name)
+            unreal.log(f"✅ Created cube: {name} at {location}")
+            return name
+        except Exception as e:
+            unreal.log_error(f"Failed to create cube: {e}")
+            return ""
 
     def create_material(self, name="Material", color=(1, 0, 0)):
         """Create a material"""
-        import ue_ai_plugin
-        result = ue_ai_plugin.create_material(name, color)
-        unreal.log(f"Created material: {result}")
-        return result
-
-
-def register_menu():
-    """Register the AI Chat menu in Unreal Editor"""
-    try:
-        # Get the tool menus manager
-        menus = unreal.ToolMenus.get()
-
-        # Find or create the menu
-        menu = menus.find_menu("LevelEditor.MainMenu.Window")
-        if not menu:
-            unreal.log_warning("Could not find Window menu")
-            return
-
-        # Add a new section for AI tools
-        section = menu.add_section("AI_Tools", "AI Tools", unreal.ToolMenuInsertByName("WindowLayout", unreal.ToolMenuInsertType.AFTER))
-
-        # Add menu entry for AI Chat
-        entry = section.add_entry(
-            unreal.ToolMenuEntry(
-                name="UEAI_Chat",
-                type=unreal.MultiBlockType.MENU_ENTRY,
-                user_interface_action_type=unreal.UserInterfaceActionType.BUTTON,
-                label="UE AI Chat",
-                tool_tip="Open the UE AI Chat panel"
+        try:
+            asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+            material = asset_tools.create_asset(
+                name,
+                "/Game/Materials",
+                unreal.Material,
+                unreal.MaterialFactoryNew()
             )
-        )
-
-        # Set up the entry
-        entry.set_string(unreal.ToolMenuEntry.STRING_PROPERTIES.URL, "http://localhost:8000")
-        entry.set_icon(unreal.SlateIcon("EditorStyle", "Icons.Person"))
-
-        unreal.log("UE AI Chat menu registered in Window menu")
-        return True
-
-    except Exception as e:
-        unreal.log_error(f"Failed to register menu: {str(e)}")
-        return False
+            unreal.log(f"✅ Created material: {name}")
+            return f"/Game/Materials/{name}"
+        except Exception as e:
+            unreal.log_error(f"Failed to create material: {e}")
+            return ""
 
 
 # Create global instance
 ai_chat = AIChatManager()
 
-# Auto-register on import
-def init():
-    """Initialize the AI Chat panel"""
-    unreal.log("=" * 50)
-    unreal.log("UE AI CHAT PANEL LOADED")
-    unreal.log("=" * 50)
-    unreal.log("")
-    unreal.log("QUICK START:")
-    unreal.log("  ai_chat.send('Hello AI')")
-    unreal.log("  ai_chat.create_cube()")
-    unreal.log("  ai_chat.create_material()")
-    unreal.log("")
-    unreal.log("Type 'ai_chat' for available methods")
-    unreal.log("=" * 50)
-
-    # Try to register menu
-    register_menu()
-
-    return ai_chat
-
-
 # Initialize
-ai_chat = init()
+unreal.log("=" * 50)
+unreal.log("UE AI CHAT LOADED")
+unreal.log("=" * 50)
+unreal.log("Type: ai_chat.send('your message')")
+unreal.log("=" * 50)
