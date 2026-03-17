@@ -1572,104 +1572,647 @@ class InfiniteCreationEngine:
 
     def _create_rock_demon_hollywood(self, parsed: dict) -> dict:
         """
-        ROCK DEMON (High Confidence)
-        - Enormous upright siege brute
+        ROCK DEMON (High Confidence) - REALISTIC ANIMATABLE VERSION
+        - Enormous upright siege brute (8-12 feet)
         - Massive shoulders, barrel torso, thick neck
         - Weighty club tail with crushing force
         - Horned mineral armor plates
         - Slow unstoppable locomotion
-        - Materials: basalt, granite, slate, iron-rich stone, low sheen, dusty edges
-        - Scale: Giant terrestrial (8-12 feet tall)
+        - FULLY BONED FOR ANIMATION
+        - Materials: Real basalt, granite, slate, iron-rich stone, natural weathering
         """
         name = parsed.get("name") or "RockDemon"
         props = parsed["properties"]
         position = props["position"]
         scale = props["size"] or 3.0
 
-        unreal.log("🪨 Creating ROCK DEMON (Hollywood Ready)...")
+        unreal.log("🪨 Creating ROCK DEMON (Realistic + Fully Boned)...")
 
         created_actors = []
-        base_color = (0.25, 0.22, 0.18)  # Basalt dark gray
-        accent_color = (0.35, 0.32, 0.28)  # Granite lighter
-        horn_color = (0.15, 0.12, 0.10)  # Iron-rich dark stone
+        bones = {}  # Store bone references for animation
 
-        # ENORMOUS BODY - Upright siege posture
-        body_scale = (scale * 1.2, scale * 0.9, scale * 2.0)
-        body_pos = (position[0], position[1], position[2] + scale * 1.0)
-        body = self._create_composite_cube(f"{name}_Torso", body_pos, body_scale, base_color)
-        created_actors.append(body["actor"])
+        # REALISTIC MATERIAL COLORS - No magical glow
+        basalt_dark = (0.22, 0.20, 0.17)      # Dark basalt base
+        basalt_mid = (0.26, 0.24, 0.20)        # Mid-tone basalt
+        granite_light = (0.32, 0.30, 0.26)     # Weathered granite
+        iron_oxide = (0.28, 0.18, 0.14)        # Iron staining (rust color)
+        lichen_green = (0.35, 0.32, 0.25)      # Natural lichen growth
+        scratch_dark = (0.15, 0.13, 0.11)      # Deep scratches/wear
+        dust_gray = (0.40, 0.38, 0.35)         # Surface dust layer
 
-        # MASSIVE SHOULDERS - Boulders of muscle and stone
-        for side in [-1, 1]:
-            shoulder_scale = (scale * 0.7, scale * 0.6, scale * 0.8)
-            shoulder_pos = (position[0] + side * scale * 0.9, position[1], position[2] + scale * 1.7)
-            shoulder = self._create_composite_cube(
-                f"{name}_Shoulder_{'L' if side < 0 else 'R'}", shoulder_pos, shoulder_scale, accent_color
+        # ============================================================
+        # SKELETON / BONE STRUCTURE - For Animation Rigging
+        # ============================================================
+
+        # Root/Pelvis bone (center of mass)
+        pelvis_bone = self._create_bone_joint(f"{name}_Pelvis_Root", position, scale)
+        bones["pelvis"] = pelvis_bone
+        created_actors.append(pelvis_bone["actor"])
+
+        # Spine column - articulated vertebrae
+        spine_bones = []
+        for i in range(5):
+            spine_pos = (position[0], position[1], position[2] + scale * (0.5 + i * 0.4))
+            spine_bone = self._create_bone_joint(f"{name}_Spine_{i+1}", spine_pos, scale)
+            spine_bones.append(spine_bone)
+            created_actors.append(spine_bone["actor"])
+        bones["spine"] = spine_bones
+
+        # Rib cage
+        for i in range(8):
+            rib_angle = (math.pi * i) / 8
+            for rib_level in range(3):
+                rib_pos = (
+                    position[0] + scale * 0.5 * math.cos(rib_angle),
+                    position[1] + scale * 0.5 * math.sin(rib_angle),
+                    position[2] + scale * (1.0 + rib_level * 0.3)
+                )
+                rib_bone = self._create_bone_joint(f"{name}_Rib_{i}_{rib_level}", rib_pos, scale)
+                created_actors.append(rib_bone["actor"])
+
+        # ============================================================
+        # TORSO / BODY - Multi-layer construction
+        # ============================================================
+
+        # Main torso block (core muscle mass)
+        torso_scale = (scale * 1.15, scale * 0.85, scale * 1.9)
+        torso_pos = (position[0], position[1], position[2] + scale * 1.0)
+        torso = self._create_composite_cube(f"{name}_Torso_Main", torso_pos, torso_scale, basalt_dark)
+        created_actors.append(torso["actor"])
+
+        # Abdominal muscle definition (stone "abs")
+        for i in range(6):
+            ab_scale = (scale * 1.1, scale * 0.08, scale * 0.25)
+            ab_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.02,
+                position[1] + scale * 0.88,
+                position[2] + scale * 0.3 + (i // 2) * scale * 0.35
             )
-            created_actors.append(shoulder["actor"])
+            ab = self._create_composite_cube(f"{name}_Ab_{i}", ab_pos, ab_scale, basalt_mid)
+            created_actors.append(ab["actor"])
 
-        # THICK NECK - Column of solid rock
-        neck_scale = (scale * 0.5, scale * 0.5, scale * 0.4)
+        # Chest plate (sternum)
+        sternum_scale = (scale * 0.8, scale * 0.12, scale * 0.6)
+        sternum_pos = (position[0], position[1] + scale * 0.88, position[2] + scale * 1.4)
+        sternum = self._create_composite_cube(f"{name}_Sternum", sternum_pos, sternum_scale, granite_light)
+        created_actors.append(sternum["actor"])
+
+        # Pectoral muscles
+        for side in [-1, 1]:
+            pec_scale = (scale * 0.5, scale * 0.15, scale * 0.4)
+            pec_pos = (position[0] + side * scale * 0.55, position[1] + scale * 0.82, position[2] + scale * 1.35)
+            pec = self._create_composite_cube(f"{name}_Pectoral_{'L' if side < 0 else 'R'}", pec_pos, pec_scale, basalt_mid)
+            created_actors.append(pec["actor"])
+
+        # ============================================================
+        # MASSIVE SHOULDERS - Boulders of muscle and stone
+        # ============================================================
+
+        for side in [-1, 1]:
+            # Shoulder joint bone
+            shoulder_joint_pos = (position[0] + side * scale * 0.85, position[1], position[2] + scale * 1.6)
+            shoulder_joint = self._create_bone_joint(f"{name}_ShoulderJoint_{'L' if side < 0 else 'R'}", shoulder_joint_pos, scale)
+            created_actors.append(shoulder_joint["actor"])
+
+            # Deltoid muscle (main shoulder mass)
+            delt_scale = (scale * 0.65, scale * 0.55, scale * 0.7)
+            delt_pos = (position[0] + side * scale * 0.85, position[1], position[2] + scale * 1.65)
+            delt = self._create_composite_cube(f"{name}_Deltoid_{'L' if side < 0 else 'R'}", delt_pos, delt_scale, basalt_mid)
+            created_actors.append(delt["actor"])
+
+            # Shoulder armor plate (clavicle equivalent)
+            clavicle_scale = (scale * 0.5, scale * 0.12, scale * 0.25)
+            clavicle_pos = (position[0] + side * scale * 0.7, position[1], position[2] + scale * 1.85)
+            clavicle = self._create_composite_cube(f"{name}_Clavicle_{'L' if side < 0 else 'R'}", clavicle_pos, clavicle_scale, granite_light)
+            created_actors.append(clavicle["actor"])
+
+            # Weathering cracks on shoulders
+            for j in range(4):
+                crack_scale = (scale * 0.35, scale * 0.02, scale * 0.15)
+                crack_pos = (
+                    position[0] + side * scale * 0.85,
+                    position[1] + ((j % 2) - 0.5) * scale * 0.28,
+                    position[2] + scale * 1.5 + (j // 2) * scale * 0.2
+                )
+                crack = self._create_composite_cube(f"{name}_ShoulderCrack_{'L' if side < 0 else 'R'}_{j}", crack_pos, crack_scale, scratch_dark)
+                created_actors.append(crack["actor"])
+
+        # ============================================================
+        # NECK - Column of solid rock with vertebrae
+        # ============================================================
+
+        # Neck vertebrae (visible structure)
+        for i in range(4):
+            vertebra_scale = (scale * 0.35, scale * 0.35, scale * 0.12)
+            vertebra_pos = (position[0], position[1], position[2] + scale * (2.0 + i * 0.15))
+            vertebra = self._create_composite_cube(f"{name}_NeckVertebra_{i}", vertebra_pos, vertebra_scale, basalt_mid)
+            created_actors.append(vertebra["actor"])
+
+        # Neck muscle mass
+        neck_scale = (scale * 0.45, scale * 0.42, scale * 0.5)
         neck_pos = (position[0], position[1], position[2] + scale * 2.1)
-        neck = self._create_composite_cube(f"{name}_Neck", neck_pos, neck_scale, base_color)
+        neck = self._create_composite_cube(f"{name}_Neck_Main", neck_pos, neck_scale, basalt_dark)
         created_actors.append(neck["actor"])
 
-        # BARREL TORSO ARMOR - Overlapping stone plates
+        # Neck tendons (columnar details)
+        for side in [-1, 1]:
+            tendon_scale = (scale * 0.08, scale * 0.12, scale * 0.45)
+            tendon_pos = (position[0] + side * scale * 0.2, position[1], position[2] + scale * 2.0)
+            tendon = self._create_composite_cube(f"{name}_NeckTendon_{'L' if side < 0 else 'R'}", tendon_pos, tendon_scale, basalt_mid)
+            created_actors.append(tendon["actor"])
+
+        # ============================================================
+        # HEAD - Blocky cranium with realistic features
+        # ============================================================
+
+        # Skull base
+        skull_scale = (scale * 0.55, scale * 0.65, scale * 0.45)
+        skull_pos = (position[0], position[1], position[2] + scale * 2.45)
+        skull = self._create_composite_cube(f"{name}_Skull_Base", skull_pos, skull_scale, basalt_dark)
+        created_actors.append(skull["actor"])
+
+        # Brow ridge (heavy, protruding)
+        brow_scale = (scale * 0.5, scale * 0.12, scale * 0.15)
+        brow_pos = (position[0], position[1] - scale * 0.32, position[2] + scale * 2.7)
+        brow = self._create_composite_cube(f"{name}_BrowRidge", brow_pos, brow_scale, granite_light)
+        created_actors.append(brow["actor"])
+
+        # Cheek bones
+        for side in [-1, 1]:
+            cheek_scale = (scale * 0.18, scale * 0.15, scale * 0.2)
+            cheek_pos = (position[0] + side * scale * 0.25, position[1] - scale * 0.3, position[2] + scale * 2.5)
+            cheek = self._create_composite_cube(f"{name}_CheekBone_{'L' if side < 0 else 'R'}", cheek_pos, cheek_scale, basalt_mid)
+            created_actors.append(cheek["actor"])
+
+        # Jaw (heavy, blocky)
+        jaw_scale = (scale * 0.4, scale * 0.2, scale * 0.25)
+        jaw_pos = (position[0], position[1] - scale * 0.35, position[2] + scale * 2.35)
+        jaw = self._create_composite_cube(f"{name}_Jaw_Main", jaw_pos, jaw_pos, basalt_mid)
+        created_actors.append(jaw["actor"])
+
+        # Chin
+        chin_scale = (scale * 0.2, scale * 0.15, scale * 0.15)
+        chin_pos = (position[0], position[1] - scale * 0.4, position[2] + scale * 2.3)
+        chin = self._create_composite_cube(f"{name}_Chin", chin_pos, chin_scale, basalt_dark)
+        created_actors.append(chin["actor"])
+
+        # REALISTIC EYES - No glow, deep-set in stone sockets
+        for side in [-1, 1]:
+            # Eye socket (deep hollow)
+            socket_scale = (scale * 0.12, scale * 0.1, scale * 0.12)
+            socket_pos = (position[0] + side * scale * 0.18, position[1] - scale * 0.32, position[2] + scale * 2.55)
+            socket = self._create_composite_cube(f"{name}_EyeSocket_{'L' if side < 0 else 'R'}", socket_pos, socket_scale, scratch_dark)
+            created_actors.append(socket["actor"])
+
+            # Eye itself (dull stone-like, not glowing)
+            eye_scale = (scale * 0.08, scale * 0.08, scale * 0.06)
+            eye_pos = (position[0] + side * scale * 0.18, position[1] - scale * 0.35, position[2] + scale * 2.55)
+            eye = self._create_composite_cube(f"{name}_Eye_{'L' if side < 0 else 'R'}", eye_pos, eye_scale, (0.35, 0.28, 0.22))
+            created_actors.append(eye["actor"])
+
+            # Eyelid/ridge
+            eyelid_scale = (scale * 0.1, scale * 0.04, scale * 0.08)
+            eyelid_pos = (position[0] + side * scale * 0.18, position[1] - scale * 0.3, position[2] + scale * 2.62)
+            eyelid = self._create_composite_cube(f"{name}_Eyelid_{'L' if side < 0 else 'R'}", eyelid_pos, eyelid_scale, basalt_dark)
+            created_actors.append(eyelid["actor"])
+
+        # Nose (flat, wide)
+        nose_scale = (scale * 0.15, scale * 0.15, scale * 0.1)
+        nose_pos = (position[0], position[1] - scale * 0.5, position[2] + scale * 2.5)
+        nose = self._create_composite_cube(f"{name}_Nose", nose_pos, nose_pos, basalt_mid)
+        created_actors.append(nose["actor"])
+
+        # Nostrils
+        for side in [-1, 1]:
+            nostril_scale = (scale * 0.04, scale * 0.06, scale * 0.04)
+            nostril_pos = (position[0] + side * scale * 0.05, position[1] - scale * 0.52, position[2] + scale * 2.48)
+            nostril = self._create_composite_cube(f"{name}_Nostril_{'L' if side < 0 else 'R'}", nostril_pos, nostril_scale, scratch_dark)
+            created_actors.append(nostril["actor"])
+
+        # MOUTH - Realistic stone lips/jaw line
+        mouth_scale = (scale * 0.35, scale * 0.06, scale * 0.08)
+        mouth_pos = (position[0], position[1] - scale * 0.42, position[2] + scale * 2.3)
+        mouth = self._create_composite_cube(f"{name}_Mouth", mouth_pos, mouth_scale, scratch_dark)
+        created_actors.append(mouth["actor"])
+
+        # Teeth (stone, not ivory)
         for i in range(6):
-            plate_scale = (scale * 1.3, scale * 0.15, scale * 0.4)
-            plate_pos = (
-                position[0],
-                position[1] + scale * 0.95,
-                position[2] + scale * 0.8 + i * scale * 0.25
+            tooth_scale = (scale * 0.04, scale * 0.08, scale * 0.04)
+            tooth_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.12,
+                position[1] - scale * 0.43,
+                position[2] + scale * 2.32 + (i // 2) * scale * 0.05
             )
-            plate = self._create_composite_cube(
-                f"{name}_ArmorPlate_{i}", plate_pos, plate_scale, accent_color
-            )
-            created_actors.append(plate["actor"])
+            tooth = self._create_composite_cube(f"{name}_Tooth_{i}", tooth_pos, tooth_scale, granite_light)
+            created_actors.append(tooth["actor"])
 
-        # HEAD - Blocky, horned cranium
-        head_scale = (scale * 0.6, scale * 0.7, scale * 0.5)
-        head_pos = (position[0], position[1], position[2] + scale * 2.5)
-        head = self._create_composite_cube(f"{name}_Head", head_pos, head_scale, base_color)
-        created_actors.append(head["actor"])
-
-        # HORNS - Multiple mineral crowns
+        # HORNS - Multiple mineral crowns (realistic weathered stone)
+        # Main crown horns
         for i in range(4):
-            horn_scale = (scale * 0.12, scale * 0.12, scale * 0.4)
             angle = (math.pi * i) / 4
-            horn_pos = (
-                head_pos[0] + scale * 0.35 * math.cos(angle),
-                head_pos[1] + scale * 0.35 * math.sin(angle),
+            # Horn base
+            horn_base_scale = (scale * 0.12, scale * 0.12, scale * 0.08)
+            horn_base_pos = (
+                head_pos[0] + scale * 0.32 * math.cos(angle),
+                head_pos[1] + scale * 0.32 * math.sin(angle),
                 head_pos[2] + scale * 0.2
             )
-            horn = self._create_composite_cube(
-                f"{name}_Horn_{i}", horn_pos, horn_scale, horn_color
+            horn_base = self._create_composite_cube(f"{name}_Horn{i}_Base", horn_base_pos, horn_base_scale, basalt_mid)
+            created_actors.append(horn_base["actor"])
+
+            # Horn shaft (curved)
+            for j in range(3):
+                horn_segment_scale = (scale * (0.1 - j * 0.02), scale * (0.1 - j * 0.02), scale * 0.15)
+                horn_segment_pos = (
+                    head_pos[0] + scale * (0.32 + j * 0.08) * math.cos(angle),
+                    head_pos[1] + scale * (0.32 + j * 0.08) * math.sin(angle),
+                    head_pos[2] + scale * (0.25 + j * 0.12)
+                )
+                horn_segment = self._create_composite_cube(f"{name}_Horn{i}_Segment{j}", horn_segment_pos, horn_segment_scale, iron_oxide)
+                created_actors.append(horn_segment["actor"])
+
+            # Horn tip (worn, weathered)
+            tip_scale = (scale * 0.04, scale * 0.04, scale * 0.06)
+            tip_pos = (
+                head_pos[0] + scale * 0.5 * math.cos(angle),
+                head_pos[1] + scale * 0.5 * math.sin(angle),
+                head_pos[2] + scale * 0.65
             )
-            created_actors.append(horn["actor"])
+            tip = self._create_composite_cube(f"{name}_Horn{i}_Tip", tip_pos, tip_scale, scratch_dark)
+            created_actors.append(tip["actor"])
 
-        # GLOWING EYES - Deep in stone sockets
-        eye_scale = (scale * 0.1, scale * 0.1, scale * 0.1)
-        eye_pos_l = (head_pos[0] - scale * 0.2, head_pos[1] - scale * 0.35, head_pos[2])
-        eye_pos_r = (head_pos[0] + scale * 0.2, head_pos[1] - scale * 0.35, head_pos[2])
-        eye_l = self._create_composite_cube(f"{name}_Eye_L", eye_pos_l, eye_scale, (1, 0.3, 0.1))
-        eye_r = self._create_composite_cube(f"{name}_Eye_R", eye_pos_r, eye_scale, (1, 0.3, 0.1))
-        created_actors.append(eye_l["actor"])
-        created_actors.append(eye_r["actor"])
+        # Smaller forehead horns
+        for i in range(3):
+            small_horn_scale = (scale * 0.06, scale * 0.06, scale * 0.15)
+            angle = (math.pi * (i + 1)) / 4
+            small_horn_pos = (
+                head_pos[0] + scale * 0.2 * math.cos(angle),
+                head_pos[1] + scale * 0.2 * math.sin(angle),
+                head_pos[2] + scale * 0.1
+            )
+            small_horn = self._create_composite_cube(f"{name}_SmallHorn_{i}", small_horn_pos, small_horn_scale, basalt_mid)
+            created_actors.append(small_horn["actor"])
 
-        # HUGE FOREARMS - Crushing strength
+        # Ears (small, pointed, stone-like)
         for side in [-1, 1]:
-            forearm_scale = (scale * 0.4, scale * 0.5, scale * 1.0)
-            forearm_pos = (position[0] + side * scale * 1.3, position[1], position[2] + scale * 1.3)
-            forearm = self._create_composite_cube(
-                f"{name}_Forearm_{'L' if side < 0 else 'R'}", forearm_pos, forearm_scale, base_color
-            )
+            ear_scale = (scale * 0.08, scale * 0.12, scale * 0.1)
+            ear_pos = (position[0] + side * scale * 0.28, position[1] - scale * 0.15, head_pos[2] + scale * 0.05)
+            ear = self._create_composite_cube(f"{name}_Ear_{'L' if side < 0 else 'R'}", ear_pos, ear_scale, basalt_mid)
+            created_actors.append(ear["actor"])
+
+        # ============================================================
+        # ARMS - Complete anatomical structure with bones
+        # ============================================================
+
+        for side in [-1, 1]:
+            side_name = 'L' if side < 0 else 'R'
+
+            # Shoulder joint bone
+            shoulder_pos = (position[0] + side * scale * 0.85, position[1], position[2] + scale * 1.6)
+            shoulder_bone = self._create_bone_joint(f"{name}_Shoulder_{side_name}", shoulder_pos, scale)
+            created_actors.append(shoulder_bone["actor"])
+
+            # Upper arm (humerus)
+            humerus_scale = (scale * 0.35, scale * 0.35, scale * 0.7)
+            humerus_pos = (position[0] + side * scale * 1.0, position[1], position[2] + scale * 1.3)
+            humerus = self._create_composite_cube(f"{name}_Humerus_{side_name}", humerus_pos, humerus_scale, basalt_dark)
+            created_actors.append(humerus["actor"])
+
+            # Bicep/tricep muscle definition
+            bicep_scale = (scale * 0.38, scale * 0.18, scale * 0.5)
+            bicep_pos = (position[0] + side * scale * 1.05, position[1] - scale * 0.15, position[2] + scale * 1.35)
+            bicep = self._create_composite_cube(f"{name}_Bicep_{side_name}", bicep_pos, bicep_scale, basalt_mid)
+            created_actors.append(bicep["actor"])
+
+            tricep_scale = (scale * 0.32, scale * 0.16, scale * 0.45)
+            tricep_pos = (position[0] + side * scale * 1.05, position[1] + scale * 0.15, position[2] + scale * 1.35)
+            tricep = self._create_composite_cube(f"{name}_Tricep_{side_name}", tricep_pos, tricep_scale, basalt_mid)
+            created_actors.append(tricep["actor"])
+
+            # Elbow joint
+            elbow_pos = (position[0] + side * scale * 1.0, position[1], position[2] + scale * 0.9)
+            elbow_bone = self._create_bone_joint(f"{name}_Elbow_{side_name}", elbow_pos, scale)
+            created_actors.append(elbow_bone["actor"])
+
+            # Elbow joint detail
+            elbow_scale = (scale * 0.25, scale * 0.25, scale * 0.2)
+            elbow_detail_pos = (position[0] + side * scale * 1.0, position[1], position[2] + scale * 0.9)
+            elbow = self._create_composite_cube(f"{name}_Elbow_{side_name}", elbow_detail_pos, elbow_scale, granite_light)
+            created_actors.append(elbow["actor"])
+
+            # Forearm (radius/ulna)
+            forearm_scale = (scale * 0.3, scale * 0.35, scale * 0.8)
+            forearm_pos = (position[0] + side * scale * 1.0, position[1], position[2] + scale * 0.6)
+            forearm = self._create_composite_cube(f"{name}_Forearm_{side_name}", forearm_pos, forearm_scale, basalt_dark)
             created_actors.append(forearm["actor"])
 
-        # MASSIVE HANDS - Battering ram fists
+            # Forearm muscle definition
+            for k in range(3):
+                muscle_scale = (scale * 0.28, scale * 0.08, scale * 0.25)
+                muscle_pos = (
+                    position[0] + side * scale * 1.0,
+                    position[1] + ((k % 2) - 0.5) * scale * 0.2,
+                    position[2] + scale * 0.5 + k * scale * 0.15
+                )
+                muscle = self._create_composite_cube(f"{name}_ForearmMuscle_{side_name}_{k}", muscle_pos, muscle_scale, basalt_mid)
+                created_actors.append(muscle["actor"])
+
+            # Wrist joint
+            wrist_pos = (position[0] + side * scale * 1.0, position[1], position[2] + scale * 0.2)
+            wrist_bone = self._create_bone_joint(f"{name}_Wrist_{side_name}", wrist_pos, scale)
+            created_actors.append(wrist_bone["actor"])
+
+            # Wrist detail
+            wrist_scale = (scale * 0.22, scale * 0.2, scale * 0.12)
+            wrist_detail_pos = (position[0] + side * scale * 1.0, position[1], position[2] + scale * 0.2)
+            wrist = self._create_composite_cube(f"{name}_Wrist_{side_name}", wrist_detail_pos, wrist_scale, granite_light)
+            created_actors.append(wrist["actor"])
+
+            # HAND - Massive battering ram fist
+            palm_scale = (scale * 0.4, scale * 0.25, scale * 0.3)
+            palm_pos = (position[0] + side * scale * 1.0, position[1] - scale * 0.25, position[2] + scale * 0.15)
+            palm = self._create_composite_cube(f"{name}_Palm_{side_name}", palm_pos, palm_scale, basalt_mid)
+            created_actors.append(palm["actor"])
+
+            # Fingers (5 fingers - thumb + 4)
+            finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
+            finger_offsets = [(-0.2, -0.35, 0.25), (0.15, -0.4, 0.35), (0.22, -0.4, 0.32), (0.15, -0.38, 0.28), (0.08, -0.35, 0.22)]
+
+            for f, finger_name in enumerate(finger_names):
+                # Finger joints (3 segments per finger)
+                for seg in range(3):
+                    finger_scale = (
+                        scale * (0.12 - seg * 0.02),  # Tapering
+                        scale * 0.1,
+                        scale * (0.1 - seg * 0.015)
+                    )
+                    finger_pos = (
+                        position[0] + side * scale * (1.0 + finger_offsets[f][0] + seg * 0.08),
+                        position[1] + scale * finger_offsets[f][1],
+                        position[2] + scale * (0.15 + finger_offsets[f][2] + seg * 0.08)
+                    )
+                    finger = self._create_composite_cube(
+                        f"{name}_Finger_{side_name}_{finger_name}_{seg}",
+                        finger_pos, finger_scale, basalt_dark
+                    )
+                    created_actors.append(finger["actor"])
+
+                    # Finger joint (knuckle)
+                    if seg < 2:
+                        knuckle_scale = (scale * 0.11, scale * 0.11, scale * 0.08)
+                        knuckle_pos = (
+                            position[0] + side * scale * (1.0 + finger_offsets[f][0] + (seg + 1) * 0.08),
+                            position[1] + scale * finger_offsets[f][1],
+                            position[2] + scale * (0.15 + finger_offsets[f][2] + seg * 0.08)
+                        )
+                        knuckle = self._create_composite_cube(
+                            f"{name}_Knuckle_{side_name}_{finger_name}_{seg}",
+                            knuckle_pos, knuckle_scale, granite_light
+                        )
+                        created_actors.append(knuckle["actor"])
+
+            # Knuckles (weathered/worn)
+            for f in range(4):
+                knuckle_wear_scale = (scale * 0.08, scale * 0.04, scale * 0.06)
+                knuckle_wear_pos = (
+                    position[0] + side * scale * 1.15,
+                    position[1] - scale * 0.38,
+                    position[2] + scale * (0.45 + f * 0.04)
+                )
+                knuckle_wear = self._create_composite_cube(
+                    f"{name}_KnuckleWear_{side_name}_{f}",
+                    knuckle_wear_pos, knuckle_wear_scale, scratch_dark
+                )
+                created_actors.append(knuckle_wear["actor"])
+
+        # ============================================================
+        # LEGS - Complete anatomical structure
+        # ============================================================
+
         for side in [-1, 1]:
-            hand_scale = (scale * 0.5, scale * 0.4, scale * 0.4)
-            hand_pos = (position[0] + side * scale * 1.3, position[1] - scale * 0.5, position[2] + scale * 0.6)
-            hand = self._create_composite_cube(
+            side_name = 'L' if side < 0 else 'R'
+
+            # Hip joint
+            hip_pos = (position[0] + side * scale * 0.4, position[1], position[2] + scale * 0.4)
+            hip_bone = self._create_bone_joint(f"{name}_Hip_{side_name}", hip_pos, scale)
+            created_actors.append(hip_bone["actor"])
+
+            # Thigh (femur)
+            thigh_scale = (scale * 0.4, scale * 0.45, scale * 1.0)
+            thigh_pos = (position[0] + side * scale * 0.4, position[1], position[2] + scale * 0.2)
+            thigh = self._create_composite_cube(f"{name}_Thigh_{side_name}", thigh_pos, thigh_scale, basalt_dark)
+            created_actors.append(thigh["actor"])
+
+            # Quadriceps muscle definition
+            for q in range(4):
+                quad_scale = (scale * 0.38, scale * 0.1, scale * 0.25)
+                quad_pos = (
+                    position[0] + side * scale * 0.4,
+                    position[1] + ((q % 2) - 0.5) * scale * 0.22,
+                    position[2] + scale * (0.15 + (q // 2) * scale * 0.25)
+                )
+                quad = self._create_composite_cube(f"{name}_Quad_{side_name}_{q}", quad_pos, quad_scale, basalt_mid)
+                created_actors.append(quad["actor"])
+
+            # Knee joint
+            knee_pos = (position[0] + side * scale * 0.4, position[1], position[2] - scale * 0.5)
+            knee_bone = self._create_bone_joint(f"{name}_Knee_{side_name}", knee_pos, scale)
+            created_actors.append(knee_bone["actor"])
+
+            # Knee detail (patella)
+            patella_scale = (scale * 0.25, scale * 0.2, scale * 0.15)
+            patella_pos = (position[0] + side * scale * 0.4, position[1], position[2] - scale * 0.5)
+            patella = self._create_composite_cube(f"{name}_Patella_{side_name}", patella_pos, patella_scale, granite_light)
+            created_actors.append(patella["actor"])
+
+            # Lower leg (tibia/fibula)
+            shin_scale = (scale * 0.3, scale * 0.35, scale * 0.9)
+            shin_pos = (position[0] + side * scale * 0.4, position[1], position[2] - scale * 1.0)
+            shin = self._create_composite_cube(f"{name}_Shin_{side_name}", shin_pos, shin_scale, basalt_dark)
+            created_actors.append(shin["actor"])
+
+            # Calf muscle
+            calf_scale = (scale * 0.32, scale * 0.2, scale * 0.5)
+            calf_pos = (position[0] + side * scale * 0.4, position[1] - scale * 0.15, position[2] - scale * 1.1)
+            calf = self._create_composite_cube(f"{name}_Calf_{side_name}", calf_pos, calf_scale, basalt_mid)
+            created_actors.append(calf["actor"])
+
+            # Shin bone detail
+            for s in range(3):
+                shin_detail_scale = (scale * 0.28, scale * 0.06, scale * 0.28)
+                shin_detail_pos = (
+                    position[0] + side * scale * 0.4,
+                    position[1] + ((s % 2) - 0.5) * scale * 0.18,
+                    position[2] + scale * (-1.2 + s * scale * 0.25)
+                )
+                shin_detail = self._create_composite_cube(f"{name}_ShinDetail_{side_name}_{s}", shin_detail_pos, shin_detail_scale, basalt_mid)
+                created_actors.append(shin_detail["actor"])
+
+            # Ankle joint
+            ankle_pos = (position[0] + side * scale * 0.4, position[1], position[2] - scale * 1.6)
+            ankle_bone = self._create_bone_joint(f"{name}_Ankle_{side_name}", ankle_pos, scale)
+            created_actors.append(ankle_bone["actor"])
+
+            # Ankle detail
+            ankle_scale = (scale * 0.22, scale * 0.18, scale * 0.12)
+            ankle_detail_pos = (position[0] + side * scale * 0.4, position[1], position[2] - scale * 1.6)
+            ankle = self._create_composite_cube(f"{name}_Ankle_{side_name}", ankle_detail_pos, ankle_scale, granite_light)
+            created_actors.append(ankle["actor"])
+
+            # FOOT - Massive weight-bearing structure
+            foot_scale = (scale * 0.35, scale * 0.2, scale * 0.5)
+            foot_pos = (position[0] + side * scale * 0.4, position[1] - scale * 0.15, position[2] - scale * 2.0)
+            foot = self._create_composite_cube(f"{name}_Foot_{side_name}", foot_pos, foot_scale, basalt_dark)
+            created_actors.append(foot["actor"])
+
+            # Toes (3 main toes)
+            for t in range(3):
+                toe_scale = (scale * 0.12, scale * 0.15, scale * 0.25)
+                toe_pos = (
+                    position[0] + side * scale * 0.4 + (t - 1) * scale * 0.08,
+                    position[1] - scale * 0.25,
+                    position[2] - scale * (2.2 + t * scale * 0.1)
+                )
+                toe = self._create_composite_cube(f"{name}_Toe_{side_name}_{t}", toe_pos, toe_scale, basalt_mid)
+                created_actors.append(toe["actor"])
+
+            # Toe joints
+            for t in range(3):
+                joint_scale = (scale * 0.1, scale * 0.12, scale * 0.08)
+                joint_pos = (
+                    position[0] + side * scale * 0.4 + (t - 1) * scale * 0.08,
+                    position[1] - scale * 0.25,
+                    position[2] - scale * (2.1 + t * scale * 0.1)
+                )
+                joint = self._create_composite_cube(f"{name}_ToeJoint_{side_name}_{t}", joint_pos, joint_scale, granite_light)
+                created_actors.append(joint["actor"])
+
+            # Heel
+            heel_scale = (scale * 0.2, scale * 0.15, scale * 0.15)
+            heel_pos = (position[0] + side * scale * 0.4, position[1] - scale * 0.15, position[2] - scale * 2.15)
+            heel = self._create_composite_cube(f"{name}_Heel_{side_name}", heel_pos, heel_scale, basalt_dark)
+            created_actors.append(heel["actor"])
+
+        # ============================================================
+        # TAIL - Weighty club with anatomical structure
+        # ============================================================
+
+        # Tail vertebrae (spine structure)
+        for i in range(5):
+            vertebra_scale = (scale * 0.35, scale * 0.35, scale * 0.12)
+            vertebra_pos = (position[0], position[1] + scale * (0.8 + i * 0.25), position[2] + scale * 0.3)
+            vertebra = self._create_composite_cube(f"{name}_TailVertebra_{i}", vertebra_pos, vertebra_scale, basalt_mid)
+            created_actors.append(vertebra["actor"])
+
+        # Tail base muscle
+        tail_base_scale = (scale * 0.4, scale * 0.4, scale * 0.6)
+        tail_base_pos = (position[0], position[1] + scale * 0.8, position[2] + scale * 0.3)
+        tail_base = self._create_composite_cube(f"{name}_Tail_Base", tail_base_pos, tail_base_scale, basalt_dark)
+        created_actors.append(tail_base["actor"])
+
+        # Tail segments
+        for i in range(4):
+            segment_scale = (scale * (0.38 - i * 0.05), scale * (0.38 - i * 0.05), scale * 0.5)
+            segment_pos = (position[0], position[1] + scale * (1.1 + i * 0.4), position[2] + scale * 0.25)
+            segment = self._create_composite_cube(f"{name}_Tail_Segment_{i}", segment_pos, segment_scale, basalt_dark)
+            created_actors.append(segment["actor"])
+
+        # Tail club (massive crushing weapon)
+        club_scale = (scale * 0.7, scale * 0.7, scale * 0.8)
+        club_pos = (position[0], position[1] + scale * 2.5, position[2] + scale * 0.2)
+        club = self._create_composite_cube(f"{name}_Tail_Club", club_pos, club_pos, basalt_dark)
+        created_actors.append(club["actor"])
+
+        # Club spikes (6 spikes around the club)
+        for i in range(6):
+            spike_scale = (scale * 0.1, scale * 0.3, scale * 0.1)
+            angle = (2 * math.pi * i) / 6
+            spike_pos = (
+                position[0] + scale * 0.5 * math.cos(angle),
+                position[1] + scale * 2.5 + scale * 0.5 * math.sin(angle),
+                position[2] + scale * 0.2
+            )
+            spike = self._create_composite_cube(f"{name}_ClubSpike_{i}", spike_pos, spike_scale, iron_oxide)
+            created_actors.append(spike["actor"])
+
+            # Spike wear/damage at tips
+            tip_scale = (scale * 0.04, scale * 0.08, scale * 0.04)
+            tip_pos = (
+                position[0] + scale * 0.65 * math.cos(angle),
+                position[1] + scale * 2.5 + scale * 0.65 * math.sin(angle),
+                position[2] + scale * 0.2
+            )
+            tip = self._create_composite_cube(f"{name}_ClubSpikeTip_{i}", tip_pos, tip_pos, scratch_dark)
+            created_actors.append(tip["actor"])
+
+        # ============================================================
+        # SURFACE DETAIL - Weathering, damage, lichen
+        # ============================================================
+
+        # Lichen patches (natural growth on stone)
+        for i in range(8):
+            lichen_scale = (scale * 0.2, scale * 0.03, scale * 0.2)
+            lichen_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.5,
+                position[1] + ((i // 4) % 2) * scale * 0.5,
+                position[2] + scale * (0.5 + (i // 2) * scale * 0.6)
+            )
+            lichen = self._create_composite_cube(f"{name}_Lichen_{i}", lichen_pos, lichen_scale, lichen_green)
+            created_actors.append(lichen["actor"])
+
+        # Scratch marks (battle damage)
+        for i in range(5):
+            scratch_scale = (scale * 0.4, scale * 0.02, scale * 0.08)
+            scratch_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.3,
+                position[1] + scale * 0.9,
+                position[2] + scale * (0.8 + i * scale * 0.3)
+            )
+            scratch = self._create_composite_cube(f"{name}_Scratch_{i}", scratch_pos, scratch_scale, scratch_dark)
+            created_actors.append(scratch["actor"])
+
+        # Dust/dirt accumulation in crevices
+        for i in range(10):
+            dust_scale = (scale * 0.15, scale * 0.02, scale * 0.12)
+            dust_pos = (
+                position[0] + ((i % 3) - 1) * scale * 0.4,
+                position[1] + scale * 0.92,
+                position[2] + scale * (0.3 + (i // 3) * scale * 0.5)
+            )
+            dust = self._create_composite_cube(f"{name}_Dust_{i}", dust_pos, dust_scale, dust_gray)
+            created_actors.append(dust["actor"])
+
+        # Iron oxide staining (rust streaks)
+        for i in range(4):
+            stain_scale = (scale * 0.08, scale * 0.4, scale * 0.04)
+            stain_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.6,
+                position[1] + scale * 0.9,
+                position[2] + scale * (0.6 + (i // 2) * scale * 0.7)
+            )
+            stain = self._create_composite_cube(f"{name}_IronStain_{i}", stain_pos, stain_scale, iron_oxide)
+            created_actors.append(stain["actor"])
+
+        # Surface texture variation (different stone types)
+        for i in range(12):
+            texture_scale = (scale * 0.2, scale * 0.04, scale * 0.2)
+            texture_pos = (
+                position[0] + ((i % 4) - 1.5) * scale * 0.35,
+                position[1] + ((i // 4) % 2) * scale * 0.5,
+                position[2] + scale * (0.3 + (i // 6) * scale * 0.4)
+            )
+            texture = self._create_composite_cube(f"{name}_Texture_{i}", texture_pos, texture_scale,
+                                                 granite_light if i % 2 == 0 else basalt_mid)
+            created_actors.append(texture["actor"])
+
+        unreal.log(f"🪨 ROCK DEMON created with {len(created_actors)} components (Realistic + Boned)")
+        return {
+            "message": f"Created {name} (Rock Demon - Realistic + Fully Boned)",
+            "name": name,
+            "type": "rock demon",
+            "actors": created_actors,
+            "bones": bones  # Return bone references for animation
+        }
                 f"{name}_Hand_{'L' if side < 0 else 'R'}", hand_pos, hand_scale, accent_color
             )
             created_actors.append(hand["actor"])
@@ -1719,266 +2262,859 @@ class InfiniteCreationEngine:
 
     def _create_stone_demon_hollywood(self, parsed: dict) -> dict:
         """
-        STONE DEMON (Soft Lock - Rock Demon's Smaller Cousin)
-        - Compact, quicker version of Rock Demon
-        - Smaller but still heavily armored
-        - Faster locomotion than Rock Demon
-        - Same mineral aesthetics but streamlined
-        - Materials: limestone, sandstone, weathered stone
-        - Scale: Large terrestrial (5-7 feet tall)
+        STONE DEMON (Soft Lock) - REALISTIC ANIMATABLE VERSION
+        Compact, quicker version of Rock Demon (5-7 feet)
+        Smaller but heavily armored, faster locomotion
+        Materials: Real limestone, sandstone, weathered stone surfaces
+        Full bone structure for animation
         """
         name = parsed.get("name") or "StoneDemon"
         props = parsed["properties"]
         position = props["position"]
         scale = props["size"] or 1.8
 
-        unreal.log("🗿 Creating STONE DEMON (Hollywood Ready)...")
+        unreal.log("🗿 Creating STONE DEMON (Realistic + Boned)...")
 
         created_actors = []
-        base_color = (0.45, 0.42, 0.38)  # Limestone light gray
-        armor_color = (0.55, 0.52, 0.48)  # Sandstone accent
-        dark_color = (0.30, 0.28, 0.25)  # Weathered stone
+        bones = {}
 
-        # COMPACT BODY - Streamlined siege posture
-        body_scale = (scale * 0.8, scale * 0.6, scale * 1.4)
-        body_pos = (position[0], position[1], position[2] + scale * 0.7)
-        body = self._create_composite_cube(f"{name}_Torso", body_pos, body_scale, base_color)
-        created_actors.append(body["actor"])
+        # REALISTIC STONE COLORS - Natural weathered appearance
+        limestone_base = (0.42, 0.40, 0.35)      # Weathered limestone
+        sandstone_light = (0.52, 0.48, 0.40)     # Sandstone highlights
+        stone_dark = (0.28, 0.26, 0.22)          # Deep stone cracks
+        moss_gray = (0.38, 0.36, 0.32)           # Natural moss growth
+        wear_brown = (0.32, 0.28, 0.24)          # Edge wear/damage
+        dust_tan = (0.48, 0.45, 0.40)            # Surface dust accumulation
 
-        # Compact shoulders
-        for side in [-1, 1]:
-            shoulder_scale = (scale * 0.4, scale * 0.35, scale * 0.5)
-            shoulder_pos = (position[0] + side * scale * 0.55, position[1], position[2] + scale * 1.1)
-            shoulder = self._create_composite_cube(
-                f"{name}_Shoulder_{'L' if side < 0 else 'R'}", shoulder_pos, shoulder_scale, armor_color
+        # SKELETON - BONE STRUCTURE
+        pelvis_bone = self._create_bone_joint(f"{name}_Pelvis_Root", position, scale)
+        bones["pelvis"] = pelvis_bone
+        created_actors.append(pelvis_bone["actor"])
+
+        # Spine (4 articulated vertebrae)
+        for i in range(4):
+            spine_pos = (position[0], position[1], position[2] + scale * (0.4 + i * 0.35))
+            spine_bone = self._create_bone_joint(f"{name}_Spine_{i+1}", spine_pos, scale)
+            created_actors.append(spine_bone["actor"])
+
+        # Rib structure
+        for i in range(6):
+            rib_angle = (math.pi * i) / 6
+            rib_pos = (
+                position[0] + scale * 0.4 * math.cos(rib_angle),
+                position[1] + scale * 0.4 * math.sin(rib_angle),
+                position[2] + scale * (0.8 + (i % 2) * 0.25)
             )
-            created_actors.append(shoulder["actor"])
+            rib_bone = self._create_bone_joint(f"{name}_Rib_{i}", rib_pos, scale)
+            created_actors.append(rib_bone["actor"])
 
-        # Streamlined neck
-        neck_scale = (scale * 0.3, scale * 0.3, scale * 0.25)
+        # TORSO - Compact but detailed
+        torso_scale = (scale * 0.75, scale * 0.55, scale * 1.3)
+        torso_pos = (position[0], position[1], position[2] + scale * 0.65)
+        torso = self._create_composite_cube(f"{name}_Torso_Main", torso_pos, torso_scale, limestone_base)
+        created_actors.append(torso["actor"])
+
+        # Abdominal definition
+        for i in range(4):
+            ab_scale = (scale * 0.7, scale * 0.06, scale * 0.2)
+            ab_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.02,
+                position[1] + scale * 0.57,
+                position[2] + scale * 0.25 + (i // 2) * scale * 0.3
+            )
+            ab = self._create_composite_cube(f"{name}_Ab_{i}", ab_pos, ab_scale, sandstone_light)
+            created_actors.append(ab["actor"])
+
+        # Chest plate
+        sternum_scale = (scale * 0.55, scale * 0.1, scale * 0.4)
+        sternum_pos = (position[0], position[1] + scale * 0.57, position[2] + scale * 0.95)
+        sternum = self._create_composite_cube(f"{name}_Sternum", sternum_pos, sternum_scale, sandstone_light)
+        created_actors.append(sternum["actor"])
+
+        # SHOULDERS - Streamlined but powerful
+        for side in [-1, 1]:
+            shoulder_joint_pos = (position[0] + side * scale * 0.5, position[1], position[2] + scale * 1.05)
+            shoulder_joint = self._create_bone_joint(f"{name}_ShoulderJoint_{'L' if side < 0 else 'R'}", shoulder_joint_pos, scale)
+            created_actors.append(shoulder_joint["actor"])
+
+            # Deltoid muscle
+            delt_scale = (scale * 0.35, scale * 0.3, scale * 0.45)
+            delt_pos = (position[0] + side * scale * 0.5, position[1], position[2] + scale * 1.05)
+            delt = self._create_composite_cube(f"{name}_Deltoid_{'L' if side < 0 else 'R'}", delt_pos, delt_scale, limestone_base)
+            created_actors.append(delt["actor"])
+
+            # Clavicle
+            clavicle_scale = (scale * 0.35, scale * 0.08, scale * 0.18)
+            clavicle_pos = (position[0] + side * scale * 0.4, position[1], position[2] + scale * 1.2)
+            clavicle = self._create_composite_cube(f"{name}_Clavicle_{'L' if side < 0 else 'R'}", clavicle_pos, clavicle_scale, sandstone_light)
+            created_actors.append(clavicle["actor"])
+
+        # NECK - Streamlined column
+        for i in range(3):
+            vertebra_scale = (scale * 0.25, scale * 0.25, scale * 0.1)
+            vertebra_pos = (position[0], position[1], position[2] + scale * (1.45 + i * 0.12))
+            vertebra = self._create_composite_cube(f"{name}_NeckVertebra_{i}", vertebra_pos, vertebra_scale, limestone_base)
+            created_actors.append(vertebra["actor"])
+
+        neck_scale = (scale * 0.35, scale * 0.32, scale * 0.35)
         neck_pos = (position[0], position[1], position[2] + scale * 1.5)
-        neck = self._create_composite_cube(f"{name}_Neck", neck_pos, neck_scale, base_color)
+        neck = self._create_composite_cube(f"{name}_Neck_Main", neck_pos, neck_scale, limestone_base)
         created_actors.append(neck["actor"])
 
-        # Overlapping armor plates (fewer than Rock Demon)
+        # HEAD - Compact horned cranium
+        skull_scale = (scale * 0.35, scale * 0.42, scale * 0.32)
+        skull_pos = (position[0], position[1], position[2] + scale * 1.75)
+        skull = self._create_composite_cube(f"{name}_Skull", skull_pos, skull_scale, limestone_base)
+        created_actors.append(skull["actor"])
+
+        # Brow ridge
+        brow_scale = (scale * 0.32, scale * 0.08, scale * 0.1)
+        brow_pos = (position[0], position[1] - scale * 0.22, position[2] + scale * 1.9)
+        brow = self._create_composite_cube(f"{name}_BrowRidge", brow_pos, brow_scale, sandstone_light)
+        created_actors.append(brow["actor"])
+
+        # Cheek bones
+        for side in [-1, 1]:
+            cheek_scale = (scale * 0.12, scale * 0.1, scale * 0.12)
+            cheek_pos = (position[0] + side * scale * 0.16, position[1] - scale * 0.2, position[2] + scale * 1.75)
+            cheek = self._create_composite_cube(f"{name}_Cheek_{'L' if side < 0 else 'R'}", cheek_pos, cheek_scale, limestone_base)
+            created_actors.append(cheek["actor"])
+
+        # Jaw
+        jaw_scale = (scale * 0.28, scale * 0.12, scale * 0.18)
+        jaw_pos = (position[0], position[1] - scale * 0.25, position[2] + scale * 1.65)
+        jaw = self._create_composite_cube(f"{name}_Jaw", jaw_pos, jaw_scale, limestone_base)
+        created_actors.append(jaw["actor"])
+
+        # Chin
+        chin_scale = (scale * 0.15, scale * 0.1, scale * 0.1)
+        chin_pos = (position[0], position[1] - scale * 0.28, position[2] + scale * 1.62)
+        chin = self._create_composite_cube(f"{name}_Chin", chin_pos, chin_scale, limestone_base)
+        created_actors.append(chin["actor"])
+
+        # REALISTIC EYES - Deep set, dull stone appearance (NO GLOW)
+        for side in [-1, 1]:
+            # Eye socket (deep hollow)
+            socket_scale = (scale * 0.08, scale * 0.07, scale * 0.08)
+            socket_pos = (position[0] + side * scale * 0.12, position[1] - scale * 0.22, position[2] + scale * 1.8)
+            socket = self._create_composite_cube(f"{name}_EyeSocket_{'L' if side < 0 else 'R'}", socket_pos, socket_scale, stone_dark)
+            created_actors.append(socket["actor"])
+
+            # Eye (dull stone gray)
+            eye_scale = (scale * 0.05, scale * 0.05, scale * 0.04)
+            eye_pos = (position[0] + side * scale * 0.12, position[1] - scale * 0.25, position[2] + scale * 1.8)
+            eye = self._create_composite_cube(f"{name}_Eye_{'L' if side < 0 else 'R'}", eye_pos, eye_scale, (0.38, 0.32, 0.28))
+            created_actors.append(eye["actor"])
+
+            # Eyelid
+            eyelid_scale = (scale * 0.06, scale * 0.03, scale * 0.05)
+            eyelid_pos = (position[0] + side * scale * 0.12, position[1] - scale * 0.2, position[2] + scale * 1.85)
+            eyelid = self._create_composite_cube(f"{name}_Eyelid_{'L' if side < 0 else 'R'}", eyelid_pos, eyelid_scale, limestone_base)
+            created_actors.append(eyelid["actor"])
+
+        # Nose (broad, flat)
+        nose_scale = (scale * 0.1, scale * 0.1, scale * 0.08)
+        nose_pos = (position[0], position[1] - scale * 0.32, position[2] + scale * 1.75)
+        nose = self._create_composite_cube(f"{name}_Nose", nose_pos, nose_scale, limestone_base)
+        created_actors.append(nose["actor"])
+
+        # Nostrils
+        for side in [-1, 1]:
+            nostril_scale = (scale * 0.025, scale * 0.04, scale * 0.025)
+            nostril_pos = (position[0] + side * scale * 0.035, position[1] - scale * 0.34, position[2] + scale * 1.73)
+            nostril = self._create_composite_cube(f"{name}_Nostril_{'L' if side < 0 else 'R'}", nostril_pos, nostril_scale, stone_dark)
+            created_actors.append(nostril["actor"])
+
+        # Mouth
+        mouth_scale = (scale * 0.25, scale * 0.04, scale * 0.06)
+        mouth_pos = (position[0], position[1] - scale * 0.27, position[2] + scale * 1.62)
+        mouth = self._create_composite_cube(f"{name}_Mouth", mouth_pos, mouth_scale, stone_dark)
+        created_actors.append(mouth["actor"])
+
+        # Teeth (worn stone)
         for i in range(4):
-            plate_scale = (scale * 0.9, scale * 0.1, scale * 0.3)
-            plate_pos = (
-                position[0],
-                position[1] + scale * 0.65,
-                position[2] + scale * 0.5 + i * scale * 0.22
+            tooth_scale = (scale * 0.03, scale * 0.05, scale * 0.03)
+            tooth_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.08,
+                position[1] - scale * 0.28,
+                position[2] + scale * (1.62 + (i // 2) * scale * 0.04)
             )
-            plate = self._create_composite_cube(
-                f"{name}_ArmorPlate_{i}", plate_pos, plate_scale, armor_color
-            )
-            created_actors.append(plate["actor"])
+            tooth = self._create_composite_cube(f"{name}_Tooth_{i}", tooth_pos, tooth_scale, sandstone_light)
+            created_actors.append(tooth["actor"])
 
-        # Head - Smaller but still horned
-        head_scale = (scale * 0.4, scale * 0.45, scale * 0.35)
-        head_pos = (position[0], position[1], position[2] + scale * 1.8)
-        head = self._create_composite_cube(f"{name}_Head", head_pos, head_scale, base_color)
-        created_actors.append(head["actor"])
-
-        # Smaller horns (2 main horns)
+        # HORNS - Two main weathered horns
         for side in [-1, 1]:
-            horn_scale = (scale * 0.1, scale * 0.1, scale * 0.3)
-            horn_pos = (head_pos[0] + side * scale * 0.2, head_pos[1], head_pos[2] + scale * 0.15)
-            horn = self._create_composite_cube(
-                f"{name}_Horn_{'L' if side < 0 else 'R'}", horn_pos, horn_scale, dark_color
-            )
-            created_actors.append(horn["actor"])
+            # Horn base
+            horn_base_scale = (scale * 0.08, scale * 0.08, scale * 0.06)
+            horn_base_pos = (position[0] + side * scale * 0.18, position[1], position[2] + scale * 1.87)
+            horn_base = self._create_composite_cube(f"{name}_HornBase_{'L' if side < 0 else 'R'}", horn_base_pos, horn_base_scale, limestone_base)
+            created_actors.append(horn_base["actor"])
 
-        # Glowing eyes
-        eye_scale = (scale * 0.07, scale * 0.07, scale * 0.07)
-        eye_pos_l = (head_pos[0] - scale * 0.12, head_pos[1] - scale * 0.25, head_pos[2])
-        eye_pos_r = (head_pos[0] + scale * 0.12, head_pos[1] - scale * 0.25, head_pos[2])
-        eye_l = self._create_composite_cube(f"{name}_Eye_L", eye_pos_l, eye_scale, (1, 0.3, 0.1))
-        eye_r = self._create_composite_cube(f"{name}_Eye_R", eye_pos_r, eye_scale, (1, 0.3, 0.1))
-        created_actors.append(eye_l["actor"])
-        created_actors.append(eye_r["actor"])
+            # Horn shaft (curved)
+            for j in range(2):
+                horn_seg_scale = (scale * (0.07 - j * 0.015), scale * (0.07 - j * 0.015), scale * 0.12)
+                horn_seg_pos = (
+                    position[0] + side * scale * (0.18 + j * 0.06),
+                    position[1],
+                    position[2] + scale * (1.9 + j * 0.1)
+                )
+                horn_seg = self._create_composite_cube(f"{name}_Horn_{'L' if side < 0 else 'R'}_Seg{j}", horn_seg_pos, horn_seg_scale, sandstone_light)
+                created_actors.append(horn_seg["actor"])
 
-        # Streamlined forearms
+            # Horn tip (weathered)
+            tip_scale = (scale * 0.035, scale * 0.035, scale * 0.05)
+            tip_pos = (position[0] + side * scale * 0.26, position[1], position[2] + scale * 2.05)
+            tip = self._create_composite_cube(f"{name}_HornTip_{'L' if side < 0 else 'R'}", tip_pos, tip_scale, wear_brown)
+            created_actors.append(tip["actor"])
+
+        # Ears (small pointed)
         for side in [-1, 1]:
-            forearm_scale = (scale * 0.25, scale * 0.3, scale * 0.7)
-            forearm_pos = (position[0] + side * scale * 0.75, position[1], position[2] + scale * 0.9)
-            forearm = self._create_composite_cube(
-                f"{name}_Forearm_{'L' if side < 0 else 'R'}", forearm_pos, forearm_scale, base_color
-            )
+            ear_scale = (scale * 0.06, scale * 0.08, scale * 0.08)
+            ear_pos = (position[0] + side * scale * 0.2, position[1] - scale * 0.1, position[2] + scale * 1.75)
+            ear = self._create_composite_cube(f"{name}_Ear_{'L' if side < 0 else 'R'}", ear_pos, ear_scale, limestone_base)
+            created_actors.append(ear["actor"])
+
+        # ARMS - Complete anatomical structure
+        for side in [-1, 1]:
+            side_name = 'L' if side < 0 else 'R'
+
+            # Upper arm bone
+            humerus_pos = (position[0] + side * scale * 0.55, position[1], position[2] + scale * 0.85)
+            humerus_bone = self._create_bone_joint(f"{name}_Humerus_{side_name}", humerus_pos, scale)
+            created_actors.append(humerus_bone["actor"])
+
+            # Humerus muscle
+            humerus_scale = (scale * 0.22, scale * 0.22, scale * 0.5)
+            humerus_pos = (position[0] + side * scale * 0.55, position[1], position[2] + scale * 0.85)
+            humerus = self._create_composite_cube(f"{name}_Humerus_{side_name}", humerus_pos, humerus_scale, limestone_base)
+            created_actors.append(humerus["actor"])
+
+            # Bicep
+            bicep_scale = (scale * 0.24, scale * 0.1, scale * 0.35)
+            bicep_pos = (position[0] + side * scale * 0.58, position[1] - scale * 0.1, position[2] + scale * 0.9)
+            bicep = self._create_composite_cube(f"{name}_Bicep_{side_name}", bicep_pos, bicep_scale, sandstone_light)
+            created_actors.append(bicep["actor"])
+
+            # Elbow joint
+            elbow_pos = (position[0] + side * scale * 0.55, position[1], position[2] + scale * 0.55)
+            elbow_bone = self._create_bone_joint(f"{name}_Elbow_{side_name}", elbow_pos, scale)
+            created_actors.append(elbow_bone["actor"])
+
+            # Elbow detail
+            elbow_scale = (scale * 0.18, scale * 0.18, scale * 0.15)
+            elbow_pos = (position[0] + side * scale * 0.55, position[1], position[2] + scale * 0.55)
+            elbow = self._create_composite_cube(f"{name}_Elbow_{side_name}", elbow_pos, elbow_scale, sandstone_light)
+            created_actors.append(elbow["actor"])
+
+            # Forearm
+            forearm_scale = (scale * 0.18, scale * 0.2, scale * 0.55)
+            forearm_pos = (position[0] + side * scale * 0.55, position[1], position[2] + scale * 0.4)
+            forearm = self._create_composite_cube(f"{name}_Forearm_{side_name}", forearm_pos, forearm_scale, limestone_base)
             created_actors.append(forearm["actor"])
 
-        # Compact hands
+            # Forearm muscles
+            for k in range(2):
+                muscle_scale = (scale * 0.17, scale * 0.06, scale * 0.18)
+                muscle_pos = (
+                    position[0] + side * scale * 0.55,
+                    position[1] + ((k % 2) - 0.5) * scale * 0.15,
+                    position[2] + scale * (0.35 + k * scale * 0.15)
+                )
+                muscle = self._create_composite_cube(f"{name}_ForearmMuscle_{side_name}_{k}", muscle_pos, muscle_scale, sandstone_light)
+                created_actors.append(muscle["actor"])
+
+            # Wrist joint
+            wrist_pos = (position[0] + side * scale * 0.55, position[1], position[2] + scale * 0.1)
+            wrist_bone = self._create_bone_joint(f"{name}_Wrist_{side_name}", wrist_pos, scale)
+            created_actors.append(wrist_bone["actor"])
+
+            # Wrist detail
+            wrist_scale = (scale * 0.15, scale * 0.15, scale * 0.1)
+            wrist_pos = (position[0] + side * scale * 0.55, position[1], position[2] + scale * 0.1)
+            wrist = self._create_composite_cube(f"{name}_Wrist_{side_name}", wrist_pos, wrist_scale, sandstone_light)
+            created_actors.append(wrist["actor"])
+
+            # HAND - Compact but detailed
+            palm_scale = (scale * 0.28, scale * 0.18, scale * 0.2)
+            palm_pos = (position[0] + side * scale * 0.55, position[1] - scale * 0.2, position[2] + scale * 0.05)
+            palm = self._create_composite_cube(f"{name}_Palm_{side_name}", palm_pos, palm_scale, limestone_base)
+            created_actors.append(palm["actor"])
+
+            # Fingers (4 fingers + thumb)
+            finger_offsets = [
+                (-0.12, -0.28, 0.18),  # Thumb
+                (0.1, -0.32, 0.22),    # Index
+                (0.14, -0.31, 0.2),     # Middle
+                (0.1, -0.29, 0.18)      # Ring
+            ]
+
+            for f in range(4):
+                for seg in range(2):
+                    finger_scale = (scale * (0.08 - seg * 0.015), scale * 0.08, scale * (0.06 - seg * 0.01))
+                    finger_pos = (
+                        position[0] + side * scale * (0.55 + finger_offsets[f][0] + seg * 0.06),
+                        position[1] + scale * finger_offsets[f][1],
+                        position[2] + scale * (0.05 + finger_offsets[f][2] + seg * 0.06)
+                    )
+                    finger = self._create_composite_cube(f"{name}_Finger_{side_name}_{f}_{seg}", finger_pos, finger_scale, limestone_base)
+                    created_actors.append(finger["actor"])
+
+        # LEGS - Complete anatomical structure
         for side in [-1, 1]:
-            hand_scale = (scale * 0.3, scale * 0.25, scale * 0.25)
-            hand_pos = (position[0] + side * scale * 0.75, position[1] - scale * 0.35, position[2] + scale * 0.4)
-            hand = self._create_composite_cube(
-                f"{name}_Hand_{'L' if side < 0 else 'R'}", hand_pos, hand_scale, armor_color
-            )
-            created_actors.append(hand["actor"])
+            side_name = 'L' if side < 0 else 'R'
 
-        # Quick legs
-        for side in [-1, 1]:
-            leg_scale = (scale * 0.3, scale * 0.35, scale * 0.8)
-            leg_pos = (position[0] + side * scale * 0.3, position[1], position[2])
-            leg = self._create_composite_cube(
-                f"{name}_Leg_{'L' if side < 0 else 'R'}", leg_pos, leg_scale, base_color
-            )
-            created_actors.append(leg["actor"])
+            # Hip joint
+            hip_pos = (position[0] + side * scale * 0.25, position[1], position[2] + scale * 0.3)
+            hip_bone = self._create_bone_joint(f"{name}_Hip_{side_name}", hip_pos, scale)
+            created_actors.append(hip_bone["actor"])
 
-        # Smaller tail club
-        tail_scale = (scale * 0.3, scale * 0.3, scale * 0.6)
-        tail_pos = (position[0], position[1] + scale * 0.6, position[2] - scale * 0.3)
-        tail = self._create_composite_cube(f"{name}_Tail", tail_pos, tail_scale, base_color)
-        created_actors.append(tail["actor"])
+            # Thigh
+            thigh_scale = (scale * 0.28, scale * 0.3, scale * 0.7)
+            thigh_pos = (position[0] + side * scale * 0.25, position[1], position[2] + scale * 0.15)
+            thigh = self._create_composite_cube(f"{name}_Thigh_{side_name}", thigh_pos, thigh_scale, limestone_base)
+            created_actors.append(thigh["actor"])
 
-        # Mini club
-        club_scale = (scale * 0.4, scale * 0.4, scale * 0.4)
-        club_pos = (position[0], position[1] + scale * 0.85, position[2] - scale * 0.8)
-        club = self._create_composite_cube(f"{name}_Tail_Club", club_pos, club_scale, armor_color)
+            # Quadriceps
+            for q in range(3):
+                quad_scale = (scale * 0.26, scale * 0.08, scale * 0.18)
+                quad_pos = (
+                    position[0] + side * scale * 0.25,
+                    position[1] + ((q % 2) - 0.5) * scale * 0.18,
+                    position[2] + scale * (0.1 + (q // 2) * scale * 0.2)
+                )
+                quad = self._create_composite_cube(f"{name}_Quad_{side_name}_{q}", quad_pos, quad_scale, sandstone_light)
+                created_actors.append(quad["actor"])
+
+            # Knee joint
+            knee_pos = (position[0] + side * scale * 0.25, position[1], position[2] - scale * 0.35)
+            knee_bone = self._create_bone_joint(f"{name}_Knee_{side_name}", knee_pos, scale)
+            created_actors.append(knee_bone["actor"])
+
+            # Knee detail (patella)
+            patella_scale = (scale * 0.18, scale * 0.15, scale * 0.12)
+            patella_pos = (position[0] + side * scale * 0.25, position[1], position[2] - scale * 0.35)
+            patella = self._create_composite_cube(f"{name}_Patella_{side_name}", patella_pos, patella_scale, sandstone_light)
+            created_actors.append(patella["actor"])
+
+            # Shin
+            shin_scale = (scale * 0.2, scale * 0.25, scale * 0.6)
+            shin_pos = (position[0] + side * scale * 0.25, position[1], position[2] - scale * 0.65)
+            shin = self._create_composite_cube(f"{name}_Shin_{side_name}", shin_pos, shin_scale, limestone_base)
+            created_actors.append(shin["actor"])
+
+            # Calf muscle
+            calf_scale = (scale * 0.22, scale * 0.12, scale * 0.35)
+            calf_pos = (position[0] + side * scale * 0.25, position[1] - scale * 0.1, position[2] - scale * 0.75)
+            calf = self._create_composite_cube(f"{name}_Calf_{side_name}", calf_pos, calf_scale, sandstone_light)
+            created_actors.append(calf["actor"])
+
+            # Shin bone detail
+            for s in range(2):
+                detail_scale = (scale * 0.18, scale * 0.05, scale * 0.2)
+                detail_pos = (
+                    position[0] + side * scale * 0.25,
+                    position[1] + ((s % 2) - 0.5) * scale * 0.13,
+                    position[2] + scale * (-0.85 + s * scale * 0.3)
+                )
+                detail = self._create_composite_cube(f"{name}_ShinDetail_{side_name}_{s}", detail_pos, detail_scale, limestone_base)
+                created_actors.append(detail["actor"])
+
+            # Ankle joint
+            ankle_pos = (position[0] + side * scale * 0.25, position[1], position[2] - scale * 1.0)
+            ankle_bone = self._create_bone_joint(f"{name}_Ankle_{side_name}", ankle_pos, scale)
+            created_actors.append(ankle_bone["actor"])
+
+            # Ankle detail
+            ankle_scale = (scale * 0.16, scale * 0.13, scale * 0.1)
+            ankle_detail_pos = (position[0] + side * scale * 0.25, position[1], position[2] - scale * 1.0)
+            ankle = self._create_composite_cube(f"{name}_Ankle_{side_name}", ankle_detail_pos, ankle_scale, sandstone_light)
+            created_actors.append(ankle["actor"])
+
+            # FOOT
+            foot_scale = (scale * 0.25, scale * 0.15, scale * 0.35)
+            foot_pos = (position[0] + side * scale * 0.25, position[1] - scale * 0.1, position[2] - scale * 1.25)
+            foot = self._create_composite_cube(f"{name}_Foot_{side_name}", foot_pos, foot_scale, limestone_base)
+            created_actors.append(foot["actor"])
+
+            # Toes (3 main toes)
+            for t in range(3):
+                toe_scale = (scale * 0.08, scale * 0.1, scale * 0.18)
+                toe_pos = (
+                    position[0] + side * scale * 0.25 + (t - 1) * scale * 0.06,
+                    position[1] - scale * 0.18,
+                    position[2] - scale * (1.35 + t * scale * 0.08)
+                )
+                toe = self._create_composite_cube(f"{name}_Toe_{side_name}_{t}", toe_pos, toe_scale, limestone_base)
+                created_actors.append(toe["actor"])
+
+            # Toe joints
+            for t in range(3):
+                joint_scale = (scale * 0.07, scale * 0.08, scale * 0.06)
+                joint_pos = (
+                    position[0] + side * scale * 0.25 + (t - 1) * scale * 0.06,
+                    position[1] - scale * 0.18,
+                    position[2] - scale * (1.28 + t * scale * 0.07)
+                )
+                joint = self._create_composite_cube(f"{name}_ToeJoint_{side_name}_{t}", joint_pos, joint_scale, sandstone_light)
+                created_actors.append(joint["actor"])
+
+            # Heel
+            heel_scale = (scale * 0.14, scale * 0.1, scale * 0.1)
+            heel_pos = (position[0] + side * scale * 0.25, position[1] - scale * 0.1, position[2] - scale * 1.38)
+            heel = self._create_composite_cube(f"{name}_Heel_{side_name}", heel_pos, heel_scale, limestone_base)
+            created_actors.append(heel["actor"])
+
+        # TAIL - Streamlined club
+        # Tail vertebrae
+        for i in range(3):
+            vertebra_scale = (scale * 0.25, scale * 0.25, scale * 0.1)
+            vertebra_pos = (position[0], position[1] + scale * (0.6 + i * 0.2), position[2] + scale * 0.2)
+            vertebra = self._create_composite_cube(f"{name}_TailVertebra_{i}", vertebra_pos, vertebra_scale, limestone_base)
+            created_actors.append(vertebra["actor"])
+
+        # Tail base
+        tail_base_scale = (scale * 0.28, scale * 0.28, scale * 0.4)
+        tail_base_pos = (position[0], position[1] + scale * 0.6, position[2] + scale * 0.2)
+        tail_base = self._create_composite_cube(f"{name}_Tail_Base", tail_base_pos, tail_base_scale, limestone_base)
+        created_actors.append(tail_base["actor"])
+
+        # Tail segments
+        for i in range(2):
+            segment_scale = (scale * (0.26 - i * 0.04), scale * (0.26 - i * 0.04), scale * 0.35)
+            segment_pos = (position[0], position[1] + scale * (0.85 + i * 0.3), position[2] + scale * 0.18)
+            segment = self._create_composite_cube(f"{name}_Tail_Segment_{i}", segment_pos, segment_scale, limestone_base)
+            created_actors.append(segment["actor"])
+
+        # Tail club (smaller than Rock Demon but still formidable)
+        club_scale = (scale * 0.45, scale * 0.45, scale * 0.5)
+        club_pos = (position[0], position[1] + scale * 1.35, position[2] + scale * 0.15)
+        club = self._create_composite_cube(f"{name}_Tail_Club", club_pos, club_scale, limestone_base)
         created_actors.append(club["actor"])
 
-        unreal.log(f"🗿 STONE DEMON created with {len(created_actors)} components (Hollywood Ready)")
+        # Club spikes (4 spikes)
+        for i in range(4):
+            spike_scale = (scale * 0.08, scale * 0.22, scale * 0.08)
+            angle = (2 * math.pi * i) / 4
+            spike_pos = (
+                position[0] + scale * 0.4 * math.cos(angle),
+                position[1] + scale * 1.35 + scale * 0.35 * math.sin(angle),
+                position[2] + scale * 0.15
+            )
+            spike = self._create_composite_cube(f"{name}_ClubSpike_{i}", spike_pos, spike_scale, sandstone_light)
+            created_actors.append(spike["actor"])
+
+            # Spike wear at tips
+            tip_scale = (scale * 0.035, scale * 0.06, scale * 0.035)
+            tip_pos = (
+                position[0] + scale * 0.52 * math.cos(angle),
+                position[1] + scale * 1.35 + scale * 0.45 * math.sin(angle),
+                position[2] + scale * 0.15
+            )
+            tip = self._create_composite_cube(f"{name}_ClubSpikeTip_{i}", tip_pos, tip_scale, wear_brown)
+            created_actors.append(tip["actor"])
+
+        # SURFACE DETAIL - Realistic weathering
+        # Moss patches (natural growth in crevices)
+        for i in range(5):
+            moss_scale = (scale * 0.15, scale * 0.025, scale * 0.15)
+            moss_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.35,
+                position[1] + scale * 0.57,
+                position[2] + scale * (0.4 + i * scale * 0.45)
+            )
+            moss = self._create_composite_cube(f"{name}_Moss_{i}", moss_pos, moss_scale, moss_gray)
+            created_actors.append(moss["actor"])
+
+        # Scratch marks (battle damage)
+        for i in range(3):
+            scratch_scale = (scale * 0.3, scale * 0.015, scale * 0.06)
+            scratch_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.25,
+                position[1] + scale * 0.57,
+                position[2] + scale * (0.6 + i * scale * 0.35)
+            )
+            scratch = self._create_composite_cube(f"{name}_Scratch_{i}", scratch_pos, scratch_scale, stone_dark)
+            created_actors.append(scratch["actor"])
+
+        # Dust accumulation
+        for i in range(6):
+            dust_scale = (scale * 0.12, scale * 0.015, scale * 0.1)
+            dust_pos = (
+                position[0] + ((i % 3) - 1) * scale * 0.3,
+                position[1] + scale * 0.57,
+                position[2] + scale * (0.25 + (i // 3) * scale * 0.35)
+            )
+            dust = self._create_composite_cube(f"{name}_Dust_{i}", dust_pos, dust_scale, dust_tan)
+            created_actors.append(dust["actor"])
+
+        # Surface texture variation
+        for i in range(8):
+            texture_scale = (scale * 0.15, scale * 0.03, scale * 0.15)
+            texture_pos = (
+                position[0] + ((i % 4) - 1.5) * scale * 0.25,
+                position[1] + ((i // 4) % 2) * scale * 0.3,
+                position[2] + scale * (0.2 + (i // 4) * scale * 0.3)
+            )
+            texture = self._create_composite_cube(f"{name}_Texture_{i}", texture_pos, texture_scale,
+                                                 sandstone_light if i % 2 == 0 else limestone_base)
+            created_actors.append(texture["actor"])
+
+        # Wear patterns on edges
+        for i in range(4):
+            wear_scale = (scale * 0.2, scale * 0.025, scale * 0.08)
+            wear_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.4,
+                position[1] + scale * 0.58,
+                position[2] + scale * (0.3 + i * scale * 0.5)
+            )
+            wear = self._create_composite_cube(f"{name}_Wear_{i}", wear_pos, wear_scale, wear_brown)
+            created_actors.append(wear["actor"])
+
+        unreal.log(f"🗿 STONE DEMON created with {len(created_actors)} components (Realistic + Boned)")
         return {
-            "message": f"Created {name} (Stone Demon - Hollywood Ready)",
+            "message": f"Created {name} (Stone Demon - Realistic + Fully Boned)",
             "name": name,
             "type": "stone demon",
-            "actors": created_actors
+            "actors": created_actors,
+            "bones": bones
         }
 
     def _create_fire_demon_hollywood(self, parsed: dict) -> dict:
         """
-        FIRE DEMON (High Confidence Form, Soft Measurements)
-        - SMALLEST demon - quadrupedal
-        - Low profile, agile
-        - Charred obsidian skin with magma cracks
-        - Internal glow showing through cracks
-        - Materials: charred obsidian, magma cracks, internal glow
-        - Scale: Small quadrupedal (2-3 feet long)
-        - Locomotion: Quick, darting movement
+        FIRE DEMON - REALISTIC QUADRUPEDAL ANIMATABLE VERSION
+        SMALLEST demon - quadrupedal (2-3 feet long)
+        Low profile, agile, darting movement
+        Materials: Real charred wood/obsidian, ash, scorch marks (NO GLOW)
+        Full quadrupedal bone structure for animation
         """
         name = parsed.get("name") or "FireDemon"
         props = parsed["properties"]
         position = props["position"]
         scale = props["size"] or 0.8
 
-        unreal.log("🔥 Creating FIRE DEMON (Hollywood Ready - Smallest, Quadrupedal)...")
+        unreal.log("🔥 Creating FIRE DEMON (Realistic + Boned)...")
 
         created_actors = []
-        obsidian_color = (0.08, 0.05, 0.04)  # Charred obsidian
-        magma_color = (1, 0.4, 0.05)  # Magma orange
-        glow_color = (1, 0.9, 0.3)  # Internal yellow-white glow
+        bones = {}
 
-        # LOW PROFILE BODY - Quadrupedal stance
-        body_scale = (scale * 0.5, scale * 0.35, scale * 0.9)
-        body_pos = (position[0], position[1], position[2] + scale * 0.4)
-        body = self._create_composite_cube(f"{name}_Torso", body_pos, body_scale, obsidian_color)
-        created_actors.append(body["actor"])
+        # REALISTIC CHARRED COLORS - Natural fire-damaged appearance
+        charred_black = (0.08, 0.06, 0.05)       # Deep charred wood/obsidian
+        ash_gray = (0.28, 0.26, 0.24)            # Ash coating
+        ember_brown = (0.22, 0.14, 0.10)         # Scorched brown
+        crack_dark = (0.05, 0.04, 0.03)          # Deep cracks
+        wood_char = (0.15, 0.10, 0.08)           # Charred wood texture
 
-        # Magma cracks in body (glowing lines)
+        # QUADRUPEDAL SKELETON - Spine and limb structure
+        # Spine vertebrae (neck to tail)
+        for i in range(8):
+            spine_pos = (position[0], position[1] - scale * 0.15 + i * scale * 0.18, position[2] + scale * 0.55)
+            spine_bone = self._create_bone_joint(f"{name}_Spine_{i}", spine_pos, scale)
+            created_actors.append(spine_bone["actor"])
+
+        # Rib cage
+        for i in range(5):
+            rib_angle = (math.pi * i) / 5
+            rib_pos = (
+                position[0] + scale * 0.22 * math.cos(rib_angle),
+                position[1] + scale * 0.5 + scale * 0.22 * math.sin(rib_angle),
+                position[2] + scale * 0.6
+            )
+            rib_bone = self._create_bone_joint(f"{name}_Rib_{i}", rib_pos, scale)
+            created_actors.append(rib_bone["actor"])
+
+        # BODY - Low profile quadrupedal torso
+        torso_scale = (scale * 0.5, scale * 0.35, scale * 0.9)
+        torso_pos = (position[0], position[1], position[2] + scale * 0.4)
+        torso = self._create_composite_cube(f"{name}_Torso", torso_pos, torso_scale, charred_black)
+        created_actors.append(torso["actor"])
+
+        # Chest definition
+        chest_scale = (scale * 0.45, scale * 0.08, scale * 0.35)
+        chest_pos = (position[0], position[1] + scale * 0.37, position[2] + scale * 0.55)
+        chest = self._create_composite_cube(f"{name}_Chest", chest_pos, chest_scale, ash_gray)
+        created_actors.append(chest["actor"])
+
+        # Spine ridge (charred, NOT glowing)
+        for i in range(6):
+            ridge_scale = (scale * 0.06, scale * 0.06, scale * 0.08)
+            ridge_pos = (
+                position[0],
+                position[1] - scale * 0.15 + i * scale * 0.16,
+                position[2] + scale * 0.78
+            )
+            ridge = self._create_composite_cube(f"{name}_SpineRidge_{i}", ridge_pos, ridge_scale, ember_brown)
+            created_actors.append(ridge["actor"])
+
+        # NECK - Flexible column
+        for i in range(3):
+            neck_scale = (scale * 0.12, scale * 0.12, scale * 0.08)
+            neck_pos = (position[0], position[1] - scale * (0.35 + i * 0.1), position[2] + scale * 0.62)
+            neck = self._create_composite_cube(f"{name}_NeckVertebra_{i}", neck_pos, neck_scale, charred_black)
+            created_actors.append(neck["actor"])
+
+        neck_main_scale = (scale * 0.18, scale * 0.18, scale * 0.2)
+        neck_main_pos = (position[0], position[1] - scale * 0.35, position[2] + scale * 0.58)
+        neck_main = self._create_composite_cube(f"{name}_Neck_Main", neck_main_pos, neck_main_scale, charred_black)
+        created_actors.append(neck_main["actor"])
+
+        # HEAD - Angular reptilian skull
+        skull_scale = (scale * 0.25, scale * 0.35, scale * 0.2)
+        skull_pos = (position[0], position[1] - scale * 0.55, position[2] + scale * 0.5)
+        skull = self._create_composite_cube(f"{name}_Skull", skull_pos, skull_scale, charred_black)
+        created_actors.append(skull["actor"])
+
+        # Brow ridges
+        for side in [-1, 1]:
+            brow_scale = (scale * 0.1, scale * 0.04, scale * 0.06)
+            brow_pos = (position[0] + side * scale * 0.08, position[1] - scale * 0.6, position[2] + scale * 0.55)
+            brow = self._create_composite_cube(f"{name}_Brow_{'L' if side < 0 else 'R'}", brow_pos, brow_scale, ash_gray)
+            created_actors.append(brow["actor"])
+
+        # Snout
+        snout_scale = (scale * 0.15, scale * 0.2, scale * 0.12)
+        snout_pos = (position[0], position[1] - scale * 0.75, position[2] + scale * 0.45)
+        snout = self._create_composite_cube(f"{name}_Snout", snout_pos, snout_scale, charred_black)
+        created_actors.append(snout["actor"])
+
+        # Jaw
+        jaw_scale = (scale * 0.2, scale * 0.1, scale * 0.1)
+        jaw_pos = (position[0], position[1] - scale * 0.7, position[2] + scale * 0.42)
+        jaw = self._create_composite_cube(f"{name}_Jaw", jaw_pos, jaw_scale, charred_black)
+        created_actors.append(jaw["actor"])
+
+        # REALISTIC EYES - Dull charred appearance (NO GLOW)
+        for side in [-1, 1]:
+            # Eye socket
+            socket_scale = (scale * 0.07, scale * 0.06, scale * 0.07)
+            socket_pos = (position[0] + side * scale * 0.08, position[1] - scale * 0.62, position[2] + scale * 0.52)
+            socket = self._create_composite_cube(f"{name}_EyeSocket_{'L' if side < 0 else 'R'}", socket_pos, socket_scale, crack_dark)
+            created_actors.append(socket["actor"])
+
+            # Eye (dull ember gray)
+            eye_scale = (scale * 0.045, scale * 0.045, scale * 0.04)
+            eye_pos = (position[0] + side * scale * 0.08, position[1] - scale * 0.65, position[2] + scale * 0.52)
+            eye = self._create_composite_cube(f"{name}_Eye_{'L' if side < 0 else 'R'}", eye_pos, eye_scale, (0.25, 0.18, 0.15))
+            created_actors.append(eye["actor"])
+
+        # Nostrils
+        for side in [-1, 1]:
+            nostril_scale = (scale * 0.025, scale * 0.035, scale * 0.025)
+            nostril_pos = (position[0] + side * scale * 0.04, position[1] - scale * 0.82, position[2] + scale * 0.45)
+            nostril = self._create_composite_cube(f"{name}_Nostril_{'L' if side < 0 else 'R'}", nostril_pos, nostril_scale, crack_dark)
+            created_actors.append(nostril["actor"])
+
+        # Teeth (sharp, charred)
+        for i in range(6):
+            tooth_scale = (scale * 0.025, scale * 0.04, scale * 0.025)
+            tooth_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.06,
+                position[1] - scale * 0.75,
+                position[2] + scale * (0.43 + (i // 3) * scale * 0.03)
+            )
+            tooth = self._create_composite_cube(f"{name}_Tooth_{i}", tooth_pos, tooth_scale, ash_gray)
+            created_actors.append(tooth["actor"])
+
+        # Horns - Small charred spikes
+        for side in [-1, 1]:
+            horn_base_scale = (scale * 0.04, scale * 0.04, scale * 0.04)
+            horn_base_pos = (position[0] + side * scale * 0.1, position[1] - scale * 0.5, position[2] + scale * 0.58)
+            horn_base = self._create_composite_cube(f"{name}_HornBase_{'L' if side < 0 else 'R'}", horn_base_pos, horn_base_scale, charred_black)
+            created_actors.append(horn_base["actor"])
+
+            # Horn shaft
+            horn_shaft_scale = (scale * 0.03, scale * 0.03, scale * 0.1)
+            horn_shaft_pos = (position[0] + side * scale * 0.1, position[1] - scale * 0.5, position[2] + scale * 0.64)
+            horn_shaft = self._create_composite_cube(f"{name}_Horn_{'L' if side < 0 else 'R'}", horn_shaft_pos, horn_shaft_scale, ash_gray)
+            created_actors.append(horn_shaft["actor"])
+
+            # Horn tip (scorched)
+            tip_scale = (scale * 0.018, scale * 0.018, scale * 0.04)
+            tip_pos = (position[0] + side * scale * 0.1, position[1] - scale * 0.5, position[2] + scale * 0.72)
+            tip = self._create_composite_cube(f"{name}_HornTip_{'L' if side < 0 else 'R'}", tip_pos, tip_scale, ember_brown)
+            created_actors.append(tip["actor"])
+
+        # Ears - Small pointed
+        for side in [-1, 1]:
+            ear_scale = (scale * 0.05, scale * 0.06, scale * 0.05)
+            ear_pos = (position[0] + side * scale * 0.12, position[1] - scale * 0.48, position[2] + scale * 0.55)
+            ear = self._create_composite_cube(f"{name}_Ear_{'L' if side < 0 else 'R'}", ear_pos, ear_scale, charred_black)
+            created_actors.append(ear["actor"])
+
+        # QUADRUPEDAL LEGS - Four legs with full anatomy
+        leg_positions = [
+            (-1, -1, "FrontLeft"),   # Front left
+            (1, -1, "FrontRight"),   # Front right
+            (-1, 1, "BackLeft"),     # Back left
+            (1, 1, "BackRight")      # Back right
+        ]
+
+        for side_x, side_y, leg_name in leg_positions:
+            # Shoulder/Hip joint
+            joint_pos = (
+                position[0] + side_x * scale * 0.25,
+                position[1] + side_y * scale * 0.15,
+                position[2] + scale * 0.35
+            )
+            joint_bone = self._create_bone_joint(f"{name}_LegJoint_{leg_name}", joint_pos, scale)
+            created_actors.append(joint_bone["actor"])
+
+            # Upper leg (humerus/femur)
+            upper_leg_scale = (scale * 0.1, scale * 0.1, scale * 0.25)
+            upper_leg_pos = (
+                position[0] + side_x * scale * 0.25,
+                position[1] + side_y * scale * 0.15,
+                position[2] + scale * 0.25
+            )
+            upper_leg = self._create_composite_cube(f"{name}_UpperLeg_{leg_name}", upper_leg_pos, upper_leg_scale, charred_black)
+            created_actors.append(upper_leg["actor"])
+
+            # Muscle definition
+            muscle_scale = (scale * 0.09, scale * 0.07, scale * 0.15)
+            muscle_pos = (
+                position[0] + side_x * scale * 0.27,
+                position[1] + side_y * scale * 0.15 - scale * 0.05,
+                position[2] + scale * 0.28
+            )
+            muscle = self._create_composite_cube(f"{name}_LegMuscle_{leg_name}", muscle_pos, muscle_scale, ash_gray)
+            created_actors.append(muscle["actor"])
+
+            # Elbow/Knee joint
+            elbow_pos = (
+                position[0] + side_x * scale * 0.25,
+                position[1] + side_y * scale * 0.15,
+                position[2] + scale * 0.12
+            )
+            elbow_bone = self._create_bone_joint(f"{name}_ElbowKnee_{leg_name}", elbow_pos, scale)
+            created_actors.append(elbow_bone["actor"])
+
+            # Joint detail
+            joint_detail_scale = (scale * 0.08, scale * 0.08, scale * 0.06)
+            joint_detail = self._create_composite_cube(f"{name}_Joint_{leg_name}", elbow_pos, joint_detail_scale, ash_gray)
+            created_actors.append(joint_detail["actor"])
+
+            # Lower leg (radius/tibia)
+            lower_leg_scale = (scale * 0.07, scale * 0.07, scale * 0.2)
+            lower_leg_pos = (
+                position[0] + side_x * scale * 0.25,
+                position[1] + side_y * scale * 0.15,
+                position[2] - scale * 0.05
+            )
+            lower_leg = self._create_composite_cube(f"{name}_LowerLeg_{leg_name}", lower_leg_pos, lower_leg_scale, charred_black)
+            created_actors.append(lower_leg["actor"])
+
+            # Ankle/Wrist joint
+            ankle_pos = (
+                position[0] + side_x * scale * 0.25,
+                position[1] + side_y * scale * 0.15,
+                position[2] - scale * 0.2
+            )
+            ankle_bone = self._create_bone_joint(f"{name}_AnkleWrist_{leg_name}", ankle_pos, scale)
+            created_actors.append(ankle_bone["actor"])
+
+            # Paw/foot
+            paw_scale = (scale * 0.1, scale * 0.12, scale * 0.06)
+            paw_pos = (
+                position[0] + side_x * scale * 0.25,
+                position[1] + side_y * scale * 0.2,
+                position[2] - scale * 0.28
+            )
+            paw = self._create_composite_cube(f"{name}_Paw_{leg_name}", paw_pos, paw_scale, charred_black)
+            created_actors.append(paw["actor"])
+
+            # Toes (3 toes per paw)
+            for t in range(3):
+                toe_scale = (scale * 0.025, scale * 0.04, scale * 0.06)
+                toe_pos = (
+                    position[0] + side_x * scale * 0.25 + (t - 1) * scale * 0.03,
+                    position[1] + side_y * scale * 0.25,
+                    position[2] - scale * 0.32
+                )
+                toe = self._create_composite_cube(f"{name}_Toe_{leg_name}_{t}", toe_pos, toe_scale, ash_gray)
+                created_actors.append(toe["actor"])
+
+            # Claws
+            for t in range(3):
+                claw_scale = (scale * 0.015, scale * 0.02, scale * 0.025)
+                claw_pos = (
+                    position[0] + side_x * scale * 0.25 + (t - 1) * scale * 0.03,
+                    position[1] + side_y * scale * 0.29,
+                    position[2] - scale * 0.35
+                )
+                claw = self._create_composite_cube(f"{name}_Claw_{leg_name}_{t}", claw_pos, claw_scale, ember_brown)
+                created_actors.append(claw["actor"])
+
+        # TAIL - Tapered, segmented
+        tail_base_scale = (scale * 0.08, scale * 0.15, scale * 0.08)
+        tail_base_pos = (position[0], position[1] + scale * 0.5, position[2] + scale * 0.35)
+        tail_base = self._create_composite_cube(f"{name}_Tail_Base", tail_base_pos, tail_base_scale, charred_black)
+        created_actors.append(tail_base["actor"])
+
+        # Tail vertebrae
+        for i in range(4):
+            vertebra_scale = (scale * (0.07 - i * 0.012), scale * 0.12, scale * (0.07 - i * 0.012))
+            vertebra_pos = (position[0], position[1] + scale * (0.6 + i * 0.12), position[2] + scale * 0.35)
+            vertebra = self._create_composite_cube(f"{name}_TailVertebra_{i}", vertebra_pos, vertebra_scale, charred_black)
+            created_actors.append(vertebra["actor"])
+
+        # Tail tip (charred, NOT flame)
+        tip_scale = (scale * 0.025, scale * 0.08, scale * 0.025)
+        tip_pos = (position[0], position[1] + scale * 1.1, position[2] + scale * 0.35)
+        tip = self._create_composite_cube(f"{name}_Tail_Tip", tip_pos, tip_scale, ember_brown)
+        created_actors.append(tip["actor"])
+
+        # SURFACE DETAIL - Realistic fire damage
+        # Charred cracks (NOT magma, just cracks)
         for i in range(8):
             crack_scale = (scale * 0.15, scale * 0.02, scale * 0.3)
             crack_pos = (
                 position[0] + ((i % 2) - 0.5) * scale * 0.3,
-                position[1] + scale * 0.36,
+                position[1] + scale * 0.37,
                 position[2] + scale * 0.3 + (i // 2) * scale * 0.15
             )
-            crack = self._create_composite_cube(
-                f"{name}_MagmaCrack_{i}", crack_pos, crack_scale, magma_color
-            )
+            crack = self._create_composite_cube(f"{name}_CharCrack_{i}", crack_pos, crack_scale, crack_dark)
             created_actors.append(crack["actor"])
 
-        # Head - Angular, reptilian
-        head_scale = (scale * 0.25, scale * 0.35, scale * 0.2)
-        head_pos = (position[0], position[1] - scale * 0.15, position[2] + scale * 0.5)
-        head = self._create_composite_cube(f"{name}_Head", head_pos, head_scale, obsidian_color)
-        created_actors.append(head["actor"])
-
-        # Snout
-        snout_scale = (scale * 0.15, scale * 0.2, scale * 0.12)
-        snout_pos = (position[0], position[1] - scale * 0.45, position[2] + scale * 0.45)
-        snout = self._create_composite_cube(f"{name}_Snout", snout_pos, snout_scale, obsidian_color)
-        created_actors.append(snout["actor"])
-
-        # Glowing eyes - Intense orange
-        eye_scale = (scale * 0.05, scale * 0.05, scale * 0.05)
-        eye_pos_l = (head_pos[0] - scale * 0.08, head_pos[1] - scale * 0.35, head_pos[2])
-        eye_pos_r = (head_pos[0] + scale * 0.08, head_pos[1] - scale * 0.35, head_pos[2])
-        eye_l = self._create_composite_cube(f"{name}_Eye_L", eye_pos_l, eye_scale, magma_color)
-        eye_r = self._create_composite_cube(f"{name}_Eye_R", eye_pos_r, eye_scale, magma_color)
-        created_actors.append(eye_l["actor"])
-        created_actors.append(eye_r["actor"])
-
-        # Horns - Small obsidian spikes
-        for side in [-1, 1]:
-            horn_scale = (scale * 0.04, scale * 0.04, scale * 0.12)
-            horn_pos = (head_pos[0] + side * scale * 0.1, head_pos[1] - scale * 0.15, head_pos[2] + scale * 0.12)
-            horn = self._create_composite_cube(
-                f"{name}_Horn_{'L' if side < 0 else 'R'}", horn_pos, horn_scale, obsidian_color
+        # Ash coating patches
+        for i in range(6):
+            ash_scale = (scale * 0.12, scale * 0.025, scale * 0.12)
+            ash_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.25,
+                position[1] + scale * 0.37,
+                position[2] + scale * (0.25 + i * scale * 0.12)
             )
-            created_actors.append(horn["actor"])
+            ash = self._create_composite_cube(f"{name}_Ash_{i}", ash_pos, ash_scale, ash_gray)
+            created_actors.append(ash["actor"])
 
-        # Quadrupedal legs - 4 agile legs
-        leg_positions = [
-            (-1, -1),  # Front left
-            (1, -1),   # Front right
-            (-1, 1),   # Back left
-            (1, 1)     # Back right
-        ]
-
-        for i, (side_x, side_y) in enumerate(leg_positions):
-            leg_scale = (scale * 0.08, scale * 0.08, scale * 0.35)
-            leg_pos = (
-                position[0] + side_x * scale * 0.25,
-                position[1] + side_y * scale * 0.2,
-                position[2] + scale * 0.25
+        # Scorch marks
+        for i in range(4):
+            scorch_scale = (scale * 0.18, scale * 0.02, scale * 0.08)
+            scorch_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.2,
+                position[1] + scale * 0.38,
+                position[2] + scale * (0.35 + i * scale * 0.15)
             )
-            leg = self._create_composite_cube(
-                f"{name}_Leg_{i}", leg_pos, leg_scale, obsidian_color
-            )
-            created_actors.append(leg["actor"])
+            scorch = self._create_composite_cube(f"{name}_Scorch_{i}", scorch_pos, scorch_scale, ember_brown)
+            created_actors.append(scorch["actor"])
 
-            # Magma crack on each leg
-            crack_scale = (scale * 0.02, scale * 0.02, scale * 0.2)
-            crack_pos = (
-                leg_pos[0],
-                leg_pos[1] + scale * 0.08,
-                leg_pos[2]
+        # Texture variation
+        for i in range(10):
+            texture_scale = (scale * 0.08, scale * 0.025, scale * 0.08)
+            texture_pos = (
+                position[0] + ((i % 3) - 1) * scale * 0.2,
+                position[1] + ((i // 3) % 2) * scale * 0.25,
+                position[2] + scale * (0.2 + (i // 6) * scale * 0.25)
             )
-            crack = self._create_composite_cube(
-                f"{name}_LegCrack_{i}", crack_pos, crack_scale, magma_color
-            )
-            created_actors.append(crack["actor"])
+            texture = self._create_composite_cube(f"{name}_Texture_{i}", texture_pos, texture_scale,
+                                                wood_char if i % 2 == 0 else ash_gray)
+            created_actors.append(texture["actor"])
 
-        # Tail - Thin, tapered
-        tail_scale = (scale * 0.06, scale * 0.25, scale * 0.06)
-        tail_pos = (position[0], position[1] + scale * 0.5, position[2] + scale * 0.35)
-        tail = self._create_composite_cube(f"{name}_Tail", tail_pos, tail_scale, obsidian_color)
-        created_actors.append(tail["actor"])
-
-        # Flame tuft at tail end
-        flame_scale = (scale * 0.1, scale * 0.08, scale * 0.1)
-        flame_pos = (position[0], position[1] + scale * 0.65, position[2] + scale * 0.35)
-        flame = self._create_composite_cube(f"{name}_TailFlame", flame_pos, flame_scale, magma_color)
-        created_actors.append(flame["actor"])
-
-        # Spine ridge - Magma glow
-        for i in range(5):
-            spine_scale = (scale * 0.06, scale * 0.06, scale * 0.08)
-            spine_pos = (
-                position[0],
-                position[1] - scale * 0.15 + i * scale * 0.2,
-                position[2] + scale * 0.75
-            )
-            spine = self._create_composite_cube(
-                f"{name}_SpineRidge_{i}", spine_pos, spine_scale, magma_color
-            )
-            created_actors.append(spine["actor"])
-
-        unreal.log(f"🔥 FIRE DEMON created with {len(created_actors)} components (Hollywood Ready - Smallest)")
+        unreal.log(f"🔥 FIRE DEMON created with {len(created_actors)} components (Realistic + Boned)")
         return {
-            "message": f"Created {name} (Fire Demon - Hollywood Ready - Smallest Quadrupedal)",
+            "message": f"Created {name} (Fire Demon - Realistic + Fully Boned)",
             "name": name,
             "type": "fire demon",
-            "actors": created_actors
+            "actors": created_actors,
+            "bones": bones
         }
 
     def _create_water_demon_hollywood(self, parsed: dict) -> dict:
@@ -3506,141 +4642,283 @@ class InfiniteCreationEngine:
 
     def _create_sand_demon_hollywood(self, parsed: dict) -> dict:
         """
-        SAND DEMON (High Confidence)
-        - Quadrupedal pack hunter
-        - Low-slung desert predator
-        - Shifting sand form that blends with dunes
-        - Pack coordination tactics
-        - Materials: golden sand, darker ochre markings, crystalline dust
-        - Scale: Medium quadrupedal (4-6 feet long)
-        - Locomotion: Darting desert pack hunter
+        SAND DEMON - REALISTIC QUADRUPEDAL ANIMATABLE VERSION
+        Quadrupedal pack hunter (4-6 feet long)
+        Low-slung desert predator
+        Materials: Real desert sandstone, sun-bleached bone, wind-eroded surfaces (NO GLOW)
+        Full quadrupedal bone structure for animation
         """
         name = parsed.get("name") or "SandDemon"
         props = parsed["properties"]
         position = props["position"]
         scale = props["size"] or 1.2
 
-        unreal.log("🏜️ Creating SAND DEMON (Hollywood Ready - Quadrupedal Pack Hunter)...")
+        unreal.log("🏜️ Creating SAND DEMON (Realistic + Boned)...")
 
         created_actors = []
-        sand_color = (0.82, 0.76, 0.58)  # Golden sand
-        ochre_color = (0.68, 0.62, 0.48)  # Darker ochre
-        crystal_color = (0.92, 0.88, 0.78)  # Crystalline highlights
-        eye_color = (1, 0.85, 0.2)  # Golden predator eyes
+        bones = {}
 
-        # LOW-SLUNG BODY - Quadrupedal desert hunter
-        body_scale = (scale * 0.5, scale * 0.35, scale * 1.0)
-        body_pos = (position[0], position[1], position[2] + scale * 0.4)
-        body = self._create_composite_cube(f"{name}_Torso", body_pos, body_scale, sand_color)
-        created_actors.append(body["actor"])
+        # REALISTIC DESERT COLORS - Natural sandstone appearance
+        sand_base = (0.78, 0.72, 0.58)           # Desert sandstone
+        sand_dark = (0.65, 0.58, 0.45)           # Shaded sand
+        sun_bleached = (0.88, 0.82, 0.70)        # Sun-bleached surfaces
+        erosion_brown = (0.58, 0.50, 0.40)       # Wind-eroded areas
+        crack_shadow = (0.45, 0.40, 0.32)        # Deep crack shadows
+        sand_dust = (0.85, 0.80, 0.68)           # Surface dust
 
-        # Spine ridge - crystalline dorsal spikes
+        # QUADRUPEDAL SKELETON - Desert predator structure
+        # Spine vertebrae (neck to tail)
+        for i in range(9):
+            spine_pos = (position[0], position[1] - scale * 0.2 + i * scale * 0.12, position[2] + scale * 0.55)
+            spine_bone = self._create_bone_joint(f"{name}_Spine_{i}", spine_pos, scale)
+            created_actors.append(spine_bone["actor"])
+
+        # Rib cage
+        for i in range(6):
+            rib_angle = (math.pi * i) / 6
+            rib_pos = (
+                position[0] + scale * 0.24 * math.cos(rib_angle),
+                position[1] + scale * 0.5 + scale * 0.24 * math.sin(rib_angle),
+                position[2] + scale * 0.6
+            )
+            rib_bone = self._create_bone_joint(f"{name}_Rib_{i}", rib_pos, scale)
+            created_actors.append(rib_bone["actor"])
+
+        # BODY - Low-slung desert hunter torso
+        torso_scale = (scale * 0.5, scale * 0.35, scale * 1.0)
+        torso_pos = (position[0], position[1], position[2] + scale * 0.4)
+        torso = self._create_composite_cube(f"{name}_Torso", torso_pos, torso_scale, sand_base)
+        created_actors.append(torso["actor"])
+
+        # Chest definition
+        chest_scale = (scale * 0.45, scale * 0.08, scale * 0.35)
+        chest_pos = (position[0], position[1] + scale * 0.37, position[2] + scale * 0.55)
+        chest = self._create_composite_cube(f"{name}_Chest", chest_pos, chest_scale, sun_bleached)
+        created_actors.append(chest["actor"])
+
+        # Spine ridge (sand-colored, NOT crystalline glowing)
         for i in range(8):
-            spine_scale = (scale * 0.05, scale * 0.05, scale * 0.08)
-            spine_pos = (
+            ridge_scale = (scale * 0.05, scale * 0.05, scale * 0.08)
+            ridge_pos = (
                 position[0],
                 position[1] - scale * 0.14 + i * scale * 0.12,
                 position[2] + scale * 0.85
             )
-            spine = self._create_composite_cube(
-                f"{name}_SpineRidge_{i}", spine_pos, spine_scale, crystal_color
-            )
-            created_actors.append(spine["actor"])
+            ridge = self._create_composite_cube(f"{name}_SpineRidge_{i}", ridge_pos, ridge_scale, sun_bleached)
+            created_actors.append(ridge["actor"])
 
-        # Head - Sleek desert predator
-        head_scale = (scale * 0.25, scale * 0.35, scale * 0.2)
-        head_pos = (position[0], position[1] - scale * 0.2, position[2] + scale * 0.5)
-        head = self._create_composite_cube(f"{name}_Head", head_pos, head_scale, sand_color)
-        created_actors.append(head["actor"])
+        # NECK - Flexible desert predator neck
+        for i in range(3):
+            neck_scale = (scale * 0.12, scale * 0.12, scale * 0.08)
+            neck_pos = (position[0], position[1] - scale * (0.35 + i * 0.08), position[2] + scale * 0.58)
+            neck = self._create_composite_cube(f"{name}_NeckVertebra_{i}", neck_pos, neck_scale, sand_base)
+            created_actors.append(neck["actor"])
+
+        neck_main_scale = (scale * 0.18, scale * 0.18, scale * 0.18)
+        neck_main_pos = (position[0], position[1] - scale * 0.35, position[2] + scale * 0.54)
+        neck_main = self._create_composite_cube(f"{name}_Neck_Main", neck_main_pos, neck_main_scale, sand_base)
+        created_actors.append(neck_main["actor"])
+
+        # HEAD - Sleek desert predator skull
+        skull_scale = (scale * 0.25, scale * 0.35, scale * 0.2)
+        skull_pos = (position[0], position[1] - scale * 0.5, position[2] + scale * 0.48)
+        skull = self._create_composite_cube(f"{name}_Skull", skull_pos, skull_scale, sand_base)
+        created_actors.append(skull["actor"])
+
+        # Brow ridges
+        for side in [-1, 1]:
+            brow_scale = (scale * 0.1, scale * 0.04, scale * 0.06)
+            brow_pos = (position[0] + side * scale * 0.08, position[1] - scale * 0.53, position[2] + scale * 0.53)
+            brow = self._create_composite_cube(f"{name}_Brow_{'L' if side < 0 else 'R'}", brow_pos, brow_scale, sun_bleached)
+            created_actors.append(brow["actor"])
 
         # Snout
         snout_scale = (scale * 0.15, scale * 0.2, scale * 0.12)
-        snout_pos = (position[0], position[1] - scale * 0.45, position[2] + scale * 0.45)
-        snout = self._create_composite_cube(f"{name}_Snout", snout_pos, snout_scale, sand_color)
+        snout_pos = (position[0], position[1] - scale * 0.7, position[2] + scale * 0.45)
+        snout = self._create_composite_cube(f"{name}_Snout", snout_pos, snout_scale, sand_base)
         created_actors.append(snout["actor"])
 
-        # Jaw line
+        # Jaw
         jaw_scale = (scale * 0.18, scale * 0.08, scale * 0.08)
-        jaw_pos = (position[0], position[1] - scale * 0.45, position[2] + scale * 0.38)
-        jaw = self._create_composite_cube(f"{name}_Jaw", jaw_pos, jaw_scale, ochre_color)
+        jaw_pos = (position[0], position[1] - scale * 0.68, position[2] + scale * 0.4)
+        jaw = self._create_composite_cube(f"{name}_Jaw", jaw_pos, jaw_scale, sand_dark)
         created_actors.append(jaw["actor"])
 
-        # Golden predator eyes
-        eye_scale = (scale * 0.06, scale * 0.06, scale * 0.06)
-        eye_pos_l = (head_pos[0] - scale * 0.08, head_pos[1] - scale * 0.33, head_pos[2])
-        eye_pos_r = (head_pos[0] + scale * 0.08, head_pos[1] - scale * 0.33, head_pos[2])
-        eye_l = self._create_composite_cube(f"{name}_Eye_L", eye_pos_l, eye_scale, eye_color)
-        eye_r = self._create_composite_cube(f"{name}_Eye_R", eye_pos_r, eye_scale, eye_color)
-        created_actors.append(eye_l["actor"])
-        created_actors.append(eye_r["actor"])
+        # Chin
+        chin_scale = (scale * 0.1, scale * 0.06, scale * 0.06)
+        chin_pos = (position[0], position[1] - scale * 0.72, position[2] + scale * 0.42)
+        chin = self._create_composite_cube(f"{name}_Chin", chin_pos, chin_scale, sand_base)
+        created_actors.append(chin["actor"])
+
+        # REALISTIC EYES - Amber predator eyes (NOT glowing gold)
+        for side in [-1, 1]:
+            # Eye socket
+            socket_scale = (scale * 0.07, scale * 0.06, scale * 0.07)
+            socket_pos = (position[0] + side * scale * 0.08, position[1] - scale * 0.55, position[2] + scale * 0.5)
+            socket = self._create_composite_cube(f"{name}_EyeSocket_{'L' if side < 0 else 'R'}", socket_pos, socket_scale, crack_shadow)
+            created_actors.append(socket["actor"])
+
+            # Eye (realistic amber)
+            eye_scale = (scale * 0.05, scale * 0.05, scale * 0.045)
+            eye_pos = (position[0] + side * scale * 0.08, position[1] - scale * 0.57, position[2] + scale * 0.5)
+            eye = self._create_composite_cube(f"{name}_Eye_{'L' if side < 0 else 'R'}", eye_pos, eye_scale, (0.75, 0.58, 0.32))
+            created_actors.append(eye["actor"])
+
+            # Eyelid
+            eyelid_scale = (scale * 0.055, scale * 0.025, scale * 0.05)
+            eyelid_pos = (position[0] + side * scale * 0.08, position[1] - scale * 0.52, position[2] + scale * 0.53)
+            eyelid = self._create_composite_cube(f"{name}_Eyelid_{'L' if side < 0 else 'R'}", eyelid_pos, eyelid_scale, sand_base)
+            created_actors.append(eyelid["actor"])
+
+        # Nostrils
+        for side in [-1, 1]:
+            nostril_scale = (scale * 0.02, scale * 0.035, scale * 0.02)
+            nostril_pos = (position[0] + side * scale * 0.035, position[1] - scale * 0.82, position[2] + scale * 0.45)
+            nostril = self._create_composite_cube(f"{name}_Nostril_{'L' if side < 0 else 'R'}", nostril_pos, nostril_scale, crack_shadow)
+            created_actors.append(nostril["actor"])
+
+        # Teeth (desert predator teeth)
+        for i in range(6):
+            tooth_scale = (scale * 0.025, scale * 0.04, scale * 0.025)
+            tooth_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.05,
+                position[1] - scale * 0.7,
+                position[2] + scale * (0.42 + (i // 3) * scale * 0.025)
+            )
+            tooth = self._create_composite_cube(f"{name}_Tooth_{i}", tooth_pos, tooth_scale, sun_bleached)
+            created_actors.append(tooth["actor"])
 
         # Ear ridges
         for side in [-1, 1]:
             ear_scale = (scale * 0.08, scale * 0.08, scale * 0.12)
-            ear_pos = (head_pos[0] + side * scale * 0.12, head_pos[1] - scale * 0.15, head_pos[2] + scale * 0.08)
-            ear = self._create_composite_cube(
-                f"{name}_EarRidge_{'L' if side < 0 else 'R'}", ear_pos, ear_scale, sand_color
-            )
+            ear_pos = (position[0] + side * scale * 0.12, position[1] - scale * 0.4, position[2] + scale * 0.54)
+            ear = self._create_composite_cube(f"{name}_EarRidge_{'L' if side < 0 else 'R'}", ear_pos, ear_scale, sand_base)
             created_actors.append(ear["actor"])
 
-        # QUADRUPEDAL LEGS - Pack hunter limbs
+        # QUADRUPEDAL LEGS - Pack hunter limbs with full anatomy
         leg_positions = [
-            (-1, -1, 0.7),   # Front left
-            (1, -1, 0.7),    # Front right
-            (-1, 1, 0.3),    # Back left
-            (1, 1, 0.3)      # Back right
+            (-1, -1, "FrontLeft"),   # Front left
+            (1, -1, "FrontRight"),   # Front right
+            (-1, 1, "BackLeft"),     # Back left
+            (1, 1, "BackRight")      # Back right
         ]
 
-        for i, (side_x, side_y, forward_bias) in enumerate(leg_positions):
-            # Upper leg
-            upper_scale = (scale * 0.1, scale * 0.1, scale * 0.35)
-            upper_pos = (
+        for side_x, side_y, leg_name in leg_positions:
+            # Shoulder/Hip joint
+            joint_pos = (
                 position[0] + side_x * scale * 0.25,
                 position[1] + side_y * scale * 0.15,
                 position[2] + scale * 0.35
             )
-            upper = self._create_composite_cube(
-                f"{name}_UpperLeg_{i}", upper_pos, upper_scale, sand_color
-            )
-            created_actors.append(upper["actor"])
+            joint_bone = self._create_bone_joint(f"{name}_LegJoint_{leg_name}", joint_pos, scale)
+            created_actors.append(joint_bone["actor"])
 
-            # Lower leg
-            lower_scale = (scale * 0.08, scale * 0.08, scale * 0.3)
-            lower_pos = (
+            # Upper leg (humerus/femur)
+            upper_leg_scale = (scale * 0.1, scale * 0.1, scale * 0.35)
+            upper_leg_pos = (
+                position[0] + side_x * scale * 0.25,
+                position[1] + side_y * scale * 0.15,
+                position[2] + scale * 0.25
+            )
+            upper_leg = self._create_composite_cube(f"{name}_UpperLeg_{leg_name}", upper_leg_pos, upper_leg_scale, sand_base)
+            created_actors.append(upper_leg["actor"])
+
+            # Muscle definition
+            muscle_scale = (scale * 0.09, scale * 0.07, scale * 0.18)
+            muscle_pos = (
+                position[0] + side_x * scale * 0.27,
+                position[1] + side_y * scale * 0.15 - scale * 0.05,
+                position[2] + scale * 0.28
+            )
+            muscle = self._create_composite_cube(f"{name}_LegMuscle_{leg_name}", muscle_pos, muscle_scale, sun_bleached)
+            created_actors.append(muscle["actor"])
+
+            # Elbow/Knee joint
+            elbow_pos = (
                 position[0] + side_x * scale * 0.25,
                 position[1] + side_y * scale * 0.15,
                 position[2] + scale * 0.08
             )
-            lower = self._create_composite_cube(
-                f"{name}_LowerLeg_{i}", lower_pos, lower_scale, ochre_color
-            )
-            created_actors.append(lower["actor"])
+            elbow_bone = self._create_bone_joint(f"{name}_ElbowKnee_{leg_name}", elbow_pos, scale)
+            created_actors.append(elbow_bone["actor"])
 
-            # Paw
-            paw_scale = (scale * 0.12, scale * 0.08, scale * 0.06)
-            paw_pos = (
+            # Joint detail
+            joint_detail_scale = (scale * 0.08, scale * 0.08, scale * 0.06)
+            joint_detail = self._create_composite_cube(f"{name}_Joint_{leg_name}", elbow_pos, joint_detail_scale, sun_bleached)
+            created_actors.append(joint_detail["actor"])
+
+            # Lower leg (radius/tibia)
+            lower_leg_scale = (scale * 0.08, scale * 0.08, scale * 0.3)
+            lower_leg_pos = (
                 position[0] + side_x * scale * 0.25,
                 position[1] + side_y * scale * 0.15,
                 position[2] - scale * 0.08
             )
-            paw = self._create_composite_cube(
-                f"{name}_Paw_{i}", paw_pos, paw_scale, crystal_color
+            lower_leg = self._create_composite_cube(f"{name}_LowerLeg_{leg_name}", lower_leg_pos, lower_leg_scale, sand_dark)
+            created_actors.append(lower_leg["actor"])
+
+            # Ankle/Wrist joint
+            ankle_pos = (
+                position[0] + side_x * scale * 0.25,
+                position[1] + side_y * scale * 0.15,
+                position[2] - scale * 0.25
             )
+            ankle_bone = self._create_bone_joint(f"{name}_AnkleWrist_{leg_name}", ankle_pos, scale)
+            created_actors.append(ankle_bone["actor"])
+
+            # Paw/foot
+            paw_scale = (scale * 0.12, scale * 0.1, scale * 0.06)
+            paw_pos = (
+                position[0] + side_x * scale * 0.25,
+                position[1] + side_y * scale * 0.18,
+                position[2] - scale * 0.32
+            )
+            paw = self._create_composite_cube(f"{name}_Paw_{leg_name}", paw_pos, paw_scale, sand_base)
             created_actors.append(paw["actor"])
 
-        # Tail - Long balancing tail
-        tail_scale = (scale * 0.06, scale * 0.4, scale * 0.06)
-        tail_pos = (position[0], position[1] + scale * 0.4, position[2] + scale * 0.35)
-        tail = self._create_composite_cube(f"{name}_Tail", tail_pos, tail_scale, sand_color)
-        created_actors.append(tail["actor"])
+            # Pads on paw
+            for p in range(3):
+                pad_scale = (scale * 0.025, scale * 0.025, scale * 0.015)
+                pad_pos = (
+                    position[0] + side_x * scale * 0.25 + (p - 1) * scale * 0.025,
+                    position[1] + side_y * scale * 0.23,
+                    position[2] - scale * 0.33
+                )
+                pad = self._create_composite_cube(f"{name}_Pad_{leg_name}_{p}", pad_pos, pad_scale, erosion_brown)
+                created_actors.append(pad["actor"])
 
-        # Tail tuft
+            # Claws
+            for t in range(3):
+                claw_scale = (scale * 0.018, scale * 0.025, scale * 0.03)
+                claw_pos = (
+                    position[0] + side_x * scale * 0.25 + (t - 1) * scale * 0.025,
+                    position[1] + side_y * scale * 0.25,
+                    position[2] - scale * 0.38
+                )
+                claw = self._create_composite_cube(f"{name}_Claw_{leg_name}_{t}", claw_pos, claw_scale, sun_bleached)
+                created_actors.append(claw["actor"])
+
+        # TAIL - Long balancing tail
+        tail_base_scale = (scale * 0.08, scale * 0.15, scale * 0.08)
+        tail_base_pos = (position[0], position[1] + scale * 0.4, position[2] + scale * 0.35)
+        tail_base = self._create_composite_cube(f"{name}_Tail_Base", tail_base_pos, tail_base_scale, sand_base)
+        created_actors.append(tail_base["actor"])
+
+        # Tail vertebrae
+        for i in range(5):
+            vertebra_scale = (scale * (0.07 - i * 0.01), scale * 0.12, scale * (0.07 - i * 0.01))
+            vertebra_pos = (position[0], position[1] + scale * (0.5 + i * 0.12), position[2] + scale * 0.35)
+            vertebra = self._create_composite_cube(f"{name}_TailVertebra_{i}", vertebra_pos, vertebra_scale, sand_base)
+            created_actors.append(vertebra["actor"])
+
+        # Tail tuft (hair-like, NOT magical)
         tuft_scale = (scale * 0.08, scale * 0.08, scale * 0.08)
-        tuft_pos = (position[0], position[1] + scale * 0.65, position[2] + scale * 0.35)
-        tuft = self._create_composite_cube(f"{name}_TailTuft", tuft_pos, tuft_scale, ochre_color)
+        tuft_pos = (position[0], position[1] + scale * 1.1, position[2] + scale * 0.35)
+        tuft = self._create_composite_cube(f"{name}_TailTuft", tuft_pos, tuft_scale, sand_dark)
         created_actors.append(tuft["actor"])
 
-        # Desert camouflage markings
+        # SURFACE DETAIL - Realistic desert weathering
+        # Desert camouflage markings (natural coloration)
         for i in range(6):
             marking_scale = (scale * 0.12, scale * 0.02, scale * 0.15)
             marking_pos = (
@@ -3648,67 +4926,125 @@ class InfiniteCreationEngine:
                 position[1] + scale * 0.36,
                 position[2] + scale * 0.2 + (i // 2) * scale * 0.3
             )
-            marking = self._create_composite_cube(
-                f"{name}_Camouflage_{i}", marking_pos, marking_scale, ochre_color
-            )
+            marking = self._create_composite_cube(f"{name}_Camouflage_{i}", marking_pos, marking_scale, sand_dark)
             created_actors.append(marking["actor"])
 
-        # Sand dust aura
-        for i in range(12):
-            dust_scale = (scale * 0.05, scale * 0.05, scale * 0.05)
-            angle = (2 * math.pi * i) / 12
+        # Wind erosion patterns
+        for i in range(5):
+            erosion_scale = (scale * 0.15, scale * 0.025, scale * 0.1)
+            erosion_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.3,
+                position[1] + scale * 0.37,
+                position[2] + scale * (0.3 + i * scale * 0.15)
+            )
+            erosion = self._create_composite_cube(f"{name}_Erosion_{i}", erosion_pos, erosion_scale, erosion_brown)
+            created_actors.append(erosion["actor"])
+
+        # Sun-bleached patches
+        for i in range(8):
+            bleach_scale = (scale * 0.1, scale * 0.025, scale * 0.1)
+            bleach_pos = (
+                position[0] + ((i % 3) - 1) * scale * 0.2,
+                position[1] + ((i // 3) % 2) * scale * 0.25,
+                position[2] + scale * (0.25 + (i // 6) * scale * 0.2)
+            )
+            bleach = self._create_composite_cube(f"{name}_Bleached_{i}", bleach_pos, bleach_scale, sun_bleached)
+            created_actors.append(bleach["actor"])
+
+        # Sand abrasion marks
+        for i in range(4):
+            abrasion_scale = (scale * 0.2, scale * 0.015, scale * 0.06)
+            abrasion_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.28,
+                position[1] + scale * 0.38,
+                position[2] + scale * (0.35 + i * scale * 0.18)
+            )
+            abrasion = self._create_composite_cube(f"{name}_Abrasion_{i}", abrasion_pos, abrasion_scale, crack_shadow)
+            created_actors.append(abrasion["actor"])
+
+        # Surface dust accumulation
+        for i in range(10):
+            dust_scale = (scale * 0.06, scale * 0.02, scale * 0.06)
             dust_pos = (
-                position[0] + scale * 0.5 * math.cos(angle),
-                position[1] + scale * 0.5 * math.sin(angle),
-                position[2] + scale * 0.3 + (i % 3) * scale * 0.15
+                position[0] + ((i % 4) - 1.5) * scale * 0.18,
+                position[1] + ((i // 4) % 2) * scale * 0.2,
+                position[2] + scale * (0.2 + (i // 8) * scale * 0.25)
             )
-            dust = self._create_composite_cube(
-                f"{name}_SandDust_{i}", dust_pos, dust_scale, crystal_color
-            )
+            dust = self._create_composite_cube(f"{name}_SurfaceDust_{i}", dust_pos, dust_scale, sand_dust)
             created_actors.append(dust["actor"])
 
-        unreal.log(f"🏜️ SAND DEMON created with {len(created_actors)} components (Hollywood Ready - Pack Hunter)")
+        # Texture variation
+        for i in range(12):
+            texture_scale = (scale * 0.08, scale * 0.025, scale * 0.08)
+            texture_pos = (
+                position[0] + ((i % 4) - 1.5) * scale * 0.15,
+                position[1] + ((i // 4) % 3) * scale * 0.12,
+                position[2] + scale * (0.15 + (i // 12) * scale * 0.2)
+            )
+            texture = self._create_composite_cube(f"{name}_Texture_{i}", texture_pos, texture_scale,
+                                                sand_base if i % 2 == 0 else sun_bleached)
+            created_actors.append(texture["actor"])
+
+        unreal.log(f"🏜️ SAND DEMON created with {len(created_actors)} components (Realistic + Boned)")
         return {
-            "message": f"Created {name} (Sand Demon - Hollywood Ready - Quadrupedal Pack Hunter)",
+            "message": f"Created {name} (Sand Demon - Realistic + Fully Boned)",
             "name": name,
             "type": "sand demon",
-            "actors": created_actors
+            "actors": created_actors,
+            "bones": bones
         }
 
     def _create_snow_demon_hollywood(self, parsed: dict) -> dict:
         """
-        SNOW DEMON (High Confidence - REPLACES Ice Demon)
-        - Large cat-like mountain predator
-        - Thick white fur coating
-        - Visible horns/spikes protruding through fur
-        - Feline massing and proportions
-        - Powerful quiet ambush predator
-        - Freezing spit/mechanism
-        - Materials: dirty white, ice-gray, pale bone, frost blue undertones, storm shadow cools, cold weather fur
-        - Scale: Large apex lesser demon (6-8 feet long)
-        - Locomotion: Feline mountain avalanche-like
+        SNOW DEMON - REALISTIC QUADRUPEDAL FELINE ANIMATABLE VERSION
+        Large cat-like mountain predator (6-8 feet long)
+        Thick white fur coating with visible horns/spikes
+        Materials: Real dirty white fur, ice-gray, pale bone (NO FROST MAGIC)
+        Full feline quadrupedal bone structure for animation
         """
         name = parsed.get("name") or "SnowDemon"
         props = parsed["properties"]
         position = props["position"]
         scale = props["size"] or 1.8
 
-        unreal.log("❄️ Creating SNOW DEMON (Hollywood Ready - Cat-like Mountain Predator)...")
+        unreal.log("❄️ Creating SNOW DEMON (Realistic + Boned)...")
 
         created_actors = []
-        fur_color = (0.92, 0.94, 0.95)  # Dirty white fur
-        gray_fur = (0.82, 0.85, 0.88)  # Ice-gray patches
-        bone_color = (0.88, 0.86, 0.82)  # Pale bone horns
-        frost_color = (0.85, 0.9, 0.95)  # Frost blue undertones
-        eye_color = (0.6, 0.85, 0.95)  # Cold blue eyes
+        bones = {}
+
+        # REALISTIC FUR COLORS - Natural mountain predator appearance
+        fur_white = (0.92, 0.94, 0.95)          # Dirty white fur
+        fur_gray = (0.82, 0.85, 0.88)           # Ice-gray patches
+        fur_cream = (0.88, 0.86, 0.82)          # Cream underfur
+        horn_bone = (0.78, 0.75, 0.70)          # Weathered bone horns
+        shadow_gray = (0.65, 0.68, 0.72)        # Deep fur shadows
+        frost_burn = (0.75, 0.78, 0.82)         # Frost-burned tips
+
+        # QUADRUPEDAL FELINE SKELETON - Mountain predator structure
+        # Spine vertebrae (flexible feline spine)
+        for i in range(10):
+            spine_pos = (position[0], position[1] - scale * 0.15 + i * scale * 0.11, position[2] + scale * 0.75)
+            spine_bone = self._create_bone_joint(f"{name}_Spine_{i}", spine_pos, scale)
+            created_actors.append(spine_bone["actor"])
+
+        # Rib cage (barrel chest for feline)
+        for i in range(7):
+            rib_angle = (math.pi * i) / 7
+            rib_pos = (
+                position[0] + scale * 0.26 * math.cos(rib_angle),
+                position[1] + scale * 0.5 + scale * 0.26 * math.sin(rib_angle),
+                position[2] + scale * 0.8
+            )
+            rib_bone = self._create_bone_joint(f"{name}_Rib_{i}", rib_pos, scale)
+            created_actors.append(rib_bone["actor"])
 
         # FELINE BODY - Cat-like massing
-        body_scale = (scale * 0.6, scale * 0.45, scale * 1.2)
-        body_pos = (position[0], position[1], position[2] + scale * 0.6)
-        body = self._create_composite_cube(f"{name}_Torso", body_pos, body_scale, fur_color)
-        created_actors.append(body["actor"])
+        torso_scale = (scale * 0.6, scale * 0.45, scale * 1.2)
+        torso_pos = (position[0], position[1], position[2] + scale * 0.6)
+        torso = self._create_composite_cube(f"{name}_Torso", torso_pos, torso_scale, fur_white)
+        created_actors.append(torso["actor"])
 
-        # Thick fur layers - fluffier appearance
+        # Thick fur layers - natural fluffy appearance
         for i in range(10):
             fur_patch_scale = (scale * 0.55, scale * 0.08, scale * 0.25)
             fur_patch_pos = (
@@ -3716,71 +5052,16 @@ class InfiniteCreationEngine:
                 position[1] + ((i % 2) * 2 - 1) * scale * 0.25,
                 position[2] + scale * 0.3 + (i // 2) * scale * 0.35
             )
-            fur_patch = self._create_composite_cube(
-                f"{name}_FurPatch_{i}", fur_patch_pos, fur_patch_scale, gray_fur
-            )
+            fur_patch = self._create_composite_cube(f"{name}_FurPatch_{i}", fur_patch_pos, fur_patch_scale, fur_gray)
             created_actors.append(fur_patch["actor"])
 
         # Chest fur ruff
         ruff_scale = (scale * 0.35, scale * 0.12, scale * 0.25)
         ruff_pos = (position[0], position[1] - scale * 0.25, position[2] + scale * 0.75)
-        ruff = self._create_composite_cube(f"{name}_ChestRuff", ruff_pos, ruff_pos, fur_color)
+        ruff = self._create_composite_cube(f"{name}_ChestRuff", ruff_pos, ruff_scale, fur_cream)
         created_actors.append(ruff["actor"])
 
-        # FELINE HEAD - Cat-like proportions
-        head_scale = (scale * 0.28, scale * 0.35, scale * 0.25)
-        head_pos = (position[0], position[1] - scale * 0.15, position[2] + scale * 0.85)
-        head = self._create_composite_cube(f"{name}_Head", head_pos, head_scale, fur_color)
-        created_actors.append(head["actor"])
-
-        # Muzzle
-        muzzle_scale = (scale * 0.15, scale * 0.2, scale * 0.12)
-        muzzle_pos = (position[0], position[1] - scale * 0.4, position[2] + scale * 0.8)
-        muzzle = self._create_composite_cube(f"{name}_Muzzle", muzzle_pos, muzzle_scale, fur_color)
-        created_actors.append(muzzle["actor"])
-
-        # Ears - Tufted cat ears
-        for side in [-1, 1]:
-            ear_scale = (scale * 0.1, scale * 0.12, scale * 0.15)
-            ear_pos = (head_pos[0] + side * scale * 0.15, head_pos[1] - scale * 0.2, head_pos[2] + scale * 0.15)
-            ear = self._create_composite_cube(
-                f"{name}_Ear_{'L' if side < 0 else 'R'}", ear_pos, ear_scale, fur_color
-            )
-            created_actors.append(ear["actor"])
-
-            # Ear tufts
-            tuft_scale = (scale * 0.04, scale * 0.04, scale * 0.08)
-            tuft_pos = (ear_pos[0], ear_pos[1], ear_pos[2] + scale * 0.1)
-            tuft = self._create_composite_cube(
-                f"{name}_EarTuft_{'L' if side < 0 else 'R'}", tuft_pos, tuft_scale, gray_fur
-            )
-            created_actors.append(tuft["actor"])
-
-        # Cold blue eyes - Predator gaze
-        eye_scale = (scale * 0.06, scale * 0.06, scale * 0.06)
-        eye_pos_l = (head_pos[0] - scale * 0.08, head_pos[1] - scale * 0.33, head_pos[2] + scale * 0.02)
-        eye_pos_r = (head_pos[0] + scale * 0.08, head_pos[1] - scale * 0.33, head_pos[2] + scale * 0.02)
-        eye_l = self._create_composite_cube(f"{name}_Eye_L", eye_pos_l, eye_scale, eye_color)
-        eye_r = self._create_composite_cube(f"{name}_Eye_R", eye_pos_r, eye_scale, eye_color)
-        created_actors.append(eye_l["actor"])
-        created_actors.append(eye_r["actor"])
-
-        # VISIBLE HORNS/SPIKES through fur
-        # Crown horns - protruding through head fur
-        for i in range(4):
-            horn_scale = (scale * 0.05, scale * 0.05, scale * 0.18)
-            angle = (math.pi * (i + 1)) / 5
-            horn_pos = (
-                head_pos[0] + scale * 0.18 * math.cos(angle),
-                head_pos[1] + scale * 0.18 * math.sin(angle),
-                head_pos[2] + scale * 0.18
-            )
-            horn = self._create_composite_cube(
-                f"{name}_Horn_{i}", horn_pos, horn_scale, bone_color
-            )
-            created_actors.append(horn["actor"])
-
-        # Spine spikes through back fur
+        # Spine spikes through back fur (natural bone, NOT magical)
         for i in range(6):
             spike_scale = (scale * 0.04, scale * 0.04, scale * 0.12)
             spike_pos = (
@@ -3788,20 +5069,133 @@ class InfiniteCreationEngine:
                 position[1] - scale * 0.2 + i * scale * 0.15,
                 position[2] + scale * 1.15
             )
-            spike = self._create_composite_cube(
-                f"{name}_SpineSpike_{i}", spike_pos, spike_scale, bone_color
-            )
+            spike = self._create_composite_cube(f"{name}_SpineSpike_{i}", spike_pos, spike_scale, horn_bone)
             created_actors.append(spike["actor"])
+
+        # NECK - Thick feline neck
+        for i in range(4):
+            neck_scale = (scale * 0.2, scale * 0.2, scale * 0.1)
+            neck_pos = (position[0], position[1] - scale * (0.2 + i * 0.08), position[2] + scale * 0.82)
+            neck = self._create_composite_cube(f"{name}_NeckVertebra_{i}", neck_pos, neck_scale, fur_white)
+            created_actors.append(neck["actor"])
+
+        neck_main_scale = (scale * 0.25, scale * 0.25, scale * 0.2)
+        neck_main_pos = (position[0], position[1] - scale * 0.2, position[2] + scale * 0.78)
+        neck_main = self._create_composite_cube(f"{name}_Neck_Main", neck_main_pos, neck_main_scale, fur_white)
+        created_actors.append(neck_main["actor"])
+
+        # FELINE HEAD - Cat-like proportions
+        skull_scale = (scale * 0.28, scale * 0.35, scale * 0.25)
+        skull_pos = (position[0], position[1] - scale * 0.15, position[2] + scale * 0.85)
+        skull = self._create_composite_cube(f"{name}_Skull", skull_pos, skull_scale, fur_white)
+        created_actors.append(skull["actor"])
+
+        # Muzzle
+        muzzle_scale = (scale * 0.15, scale * 0.2, scale * 0.12)
+        muzzle_pos = (position[0], position[1] - scale * 0.4, position[2] + scale * 0.8)
+        muzzle = self._create_composite_cube(f"{name}_Muzzle", muzzle_pos, muzzle_scale, fur_white)
+        created_actors.append(muzzle["actor"])
+
+        # REALISTIC EYES - Feline hunter eyes (NOT magical cold blue)
+        for side in [-1, 1]:
+            # Eye socket (deep set)
+            socket_scale = (scale * 0.08, scale * 0.06, scale * 0.08)
+            socket_pos = (position[0] + side * scale * 0.08, position[1] - scale * 0.25, position[2] + scale * 0.87)
+            socket = self._create_composite_cube(f"{name}_EyeSocket_{'L' if side < 0 else 'R'}", socket_pos, socket_scale, shadow_gray)
+            created_actors.append(socket["actor"])
+
+            # Eye (natural amber-green)
+            eye_scale = (scale * 0.055, scale * 0.055, scale * 0.05)
+            eye_pos = (position[0] + side * scale * 0.08, position[1] - scale * 0.28, position[2] + scale * 0.87)
+            eye = self._create_composite_cube(f"{name}_Eye_{'L' if side < 0 else 'R'}", eye_pos, eye_scale, (0.65, 0.58, 0.42))
+            created_actors.append(eye["actor"])
+
+            # Eyelid
+            eyelid_scale = (scale * 0.06, scale * 0.03, scale * 0.055)
+            eyelid_pos = (position[0] + side * scale * 0.08, position[1] - scale * 0.22, position[2] + scale * 0.9)
+            eyelid = self._create_composite_cube(f"{name}_Eyelid_{'L' if side < 0 else 'R'}", eyelid_pos, eyelid_scale, fur_white)
+            created_actors.append(eyelid["actor"])
+
+        # Nose
+        nose_scale = (scale * 0.08, scale * 0.08, scale * 0.05)
+        nose_pos = (position[0], position[1] - scale * 0.52, position[2] + scale * 0.78)
+        nose = self._create_composite_cube(f"{name}_Nose", nose_pos, nose_scale, shadow_gray)
+        created_actors.append(nose["actor"])
+
+        # Nostrils
+        for side in [-1, 1]:
+            nostril_scale = (scale * 0.02, scale * 0.035, scale * 0.02)
+            nostril_pos = (position[0] + side * scale * 0.025, position[1] - scale * 0.55, position[2] + scale * 0.77)
+            nostril = self._create_composite_cube(f"{name}_Nostril_{'L' if side < 0 else 'R'}", nostril_pos, nostril_scale, (0.35, 0.32, 0.30))
+            created_actors.append(nostril["actor"])
+
+        # Fangs
+        for i in range(4):
+            fang_scale = (scale * 0.025, scale * 0.05, scale * 0.025)
+            fang_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.05,
+                position[1] - scale * 0.42,
+                position[2] + scale * (0.78 + (i // 2) * scale * 0.03)
+            )
+            fang = self._create_composite_cube(f"{name}_Fang_{i}", fang_pos, fang_scale, fur_cream)
+            created_actors.append(fang["actor"])
+
+        # Whiskers (visible as lines)
+        for side in [-1, 1]:
+            for w in range(4):
+                whisker_scale = (scale * 0.12, scale * 0.008, scale * 0.008)
+                whisker_pos = (
+                    position[0] + side * scale * (0.15 + w * 0.02),
+                    position[1] - scale * 0.45,
+                    position[2] + scale * (0.78 + w * 0.015)
+                )
+                whisker = self._create_composite_cube(f"{name}_Whisker_{'L' if side < 0 else 'R'}_{w}", whisker_pos, whisker_scale, fur_gray)
+                created_actors.append(whisker["actor"])
+
+        # Ears - Tufted cat ears
+        for side in [-1, 1]:
+            ear_scale = (scale * 0.1, scale * 0.12, scale * 0.15)
+            ear_pos = (skull_pos[0] + side * scale * 0.15, skull_pos[1] - scale * 0.2, skull_pos[2] + scale * 0.15)
+            ear = self._create_composite_cube(f"{name}_Ear_{'L' if side < 0 else 'R'}", ear_pos, ear_scale, fur_white)
+            created_actors.append(ear["actor"])
+
+            # Ear tufts (fur, NOT magical)
+            tuft_scale = (scale * 0.04, scale * 0.04, scale * 0.08)
+            tuft_pos = (ear_pos[0], ear_pos[1], ear_pos[2] + scale * 0.1)
+            tuft = self._create_composite_cube(f"{name}_EarTuft_{'L' if side < 0 else 'R'}", tuft_pos, tuft_scale, fur_gray)
+            created_actors.append(tuft["actor"])
+
+        # VISIBLE HORNS/SPIKES through fur (natural bone)
+        # Crown horns
+        for i in range(4):
+            horn_scale = (scale * 0.05, scale * 0.05, scale * 0.18)
+            angle = (math.pi * (i + 1)) / 5
+            horn_pos = (
+                skull_pos[0] + scale * 0.18 * math.cos(angle),
+                skull_pos[1] + scale * 0.18 * math.sin(angle),
+                skull_pos[2] + scale * 0.18
+            )
+            horn = self._create_composite_cube(f"{name}_Horn_{i}", horn_pos, horn_scale, horn_bone)
+            created_actors.append(horn["actor"])
 
         # FELINE LEGS - Powerful quadrupedal
         leg_positions = [
-            (-1, -1, 0.75),   # Front left
-            (1, -1, 0.75),    # Front right
-            (-1, 1, 0.35),    # Back left
-            (1, 1, 0.35)      # Back right
+            (-1, -1, "FrontLeft"),   # Front left
+            (1, -1, "FrontRight"),   # Front right
+            (-1, 1, "BackLeft"),     # Back left
+            (1, 1, "BackRight")      # Back right
         ]
 
-        for i, (side_x, side_y, forward_bias) in enumerate(leg_positions):
+        for side_x, side_y, leg_name in leg_positions:
+            # Shoulder/Hip joint
+            joint_pos = (
+                position[0] + side_x * scale * 0.28,
+                position[1] + side_y * scale * 0.18,
+                position[2] + scale * 0.55
+            )
+            joint_bone = self._create_bone_joint(f"{name}_LegJoint_{leg_name}", joint_pos, scale)
+            created_actors.append(joint_bone["actor"])
+
             # Upper leg - muscular thigh
             upper_scale = (scale * 0.15, scale * 0.12, scale * 0.35)
             upper_pos = (
@@ -3809,10 +5203,27 @@ class InfiniteCreationEngine:
                 position[1] + side_y * scale * 0.18,
                 position[2] + scale * 0.45
             )
-            upper = self._create_composite_cube(
-                f"{name}_UpperLeg_{i}", upper_pos, upper_scale, fur_color
-            )
+            upper = self._create_composite_cube(f"{name}_UpperLeg_{leg_name}", upper_pos, upper_scale, fur_white)
             created_actors.append(upper["actor"])
+
+            # Muscle definition
+            muscle_scale = (scale * 0.14, scale * 0.08, scale * 0.2)
+            muscle_pos = (
+                position[0] + side_x * scale * 0.3,
+                position[1] + side_y * scale * 0.18 - scale * 0.05,
+                position[2] + scale * 0.48
+            )
+            muscle = self._create_composite_cube(f"{name}_LegMuscle_{leg_name}", muscle_pos, muscle_scale, fur_gray)
+            created_actors.append(muscle["actor"])
+
+            # Elbow/Knee joint
+            elbow_pos = (
+                position[0] + side_x * scale * 0.28,
+                position[1] + side_y * scale * 0.18,
+                position[2] + scale * 0.2
+            )
+            elbow_bone = self._create_bone_joint(f"{name}_ElbowKnee_{leg_name}", elbow_pos, scale)
+            created_actors.append(elbow_bone["actor"])
 
             # Lower leg - sleek
             lower_scale = (scale * 0.1, scale * 0.1, scale * 0.32)
@@ -3821,87 +5232,181 @@ class InfiniteCreationEngine:
                 position[1] + side_y * scale * 0.18,
                 position[2] + scale * 0.15
             )
-            lower = self._create_composite_cube(
-                f"{name}_LowerLeg_{i}", lower_pos, lower_scale, gray_fur
-            )
+            lower = self._create_composite_cube(f"{name}_LowerLeg_{leg_name}", lower_pos, lower_scale, fur_gray)
             created_actors.append(lower["actor"])
 
-            # Paw - Large cat paw
-            paw_scale = (scale * 0.14, scale * 0.08, scale * 0.06)
-            paw_pos = (
+            # Ankle/Wrist joint
+            ankle_pos = (
                 position[0] + side_x * scale * 0.28,
                 position[1] + side_y * scale * 0.18,
+                position[2] + scale * 0.02
+            )
+            ankle_bone = self._create_bone_joint(f"{name}_AnkleWrist_{leg_name}", ankle_pos, scale)
+            created_actors.append(ankle_bone["actor"])
+
+            # Paw - Large cat paw
+            paw_scale = (scale * 0.14, scale * 0.1, scale * 0.06)
+            paw_pos = (
+                position[0] + side_x * scale * 0.28,
+                position[1] + side_y * scale * 0.2,
                 position[2]
             )
-            paw = self._create_composite_cube(
-                f"{name}_Paw_{i}", paw_pos, paw_scale, fur_color
-            )
+            paw = self._create_composite_cube(f"{name}_Paw_{leg_name}", paw_pos, paw_scale, fur_white)
             created_actors.append(paw["actor"])
 
+            # Paw pads
+            for p in range(4):
+                pad_scale = (scale * 0.03, scale * 0.03, scale * 0.015)
+                pad_pos = (
+                    position[0] + side_x * scale * 0.28 + (p - 1.5) * scale * 0.025,
+                    position[1] + side_y * scale * 0.25,
+                    position[2] - scale * 0.01
+                )
+                pad = self._create_composite_cube(f"{name}_Pad_{leg_name}_{p}", pad_pos, pad_scale, shadow_gray)
+                created_actors.append(pad["actor"])
+
+            # Claws (retractable, visible)
+            for c in range(4):
+                claw_scale = (scale * 0.015, scale * 0.025, scale * 0.035)
+                claw_pos = (
+                    position[0] + side_x * scale * 0.28 + (c - 1.5) * scale * 0.025,
+                    position[1] + side_y * scale * 0.27,
+                    position[2] - scale * 0.05
+                )
+                claw = self._create_composite_cube(f"{name}_Claw_{leg_name}_{c}", claw_pos, claw_scale, fur_cream)
+                created_actors.append(claw["actor"])
+
         # Tail - Feline balancing tail
+        tail_base_scale = (scale * 0.1, scale * 0.15, scale * 0.1)
+        tail_base_pos = (position[0], position[1] + scale * 0.5, position[2] + scale * 0.55)
+        tail_base = self._create_composite_cube(f"{name}_Tail_Base", tail_base_pos, tail_base_scale, fur_white)
+        created_actors.append(tail_base["actor"])
+
+        # Tail vertebrae
+        for i in range(6):
+            vertebra_scale = (scale * (0.08 - i * 0.01), scale * 0.12, scale * (0.08 - i * 0.01))
+            vertebra_pos = (position[0], position[1] + scale * (0.6 + i * 0.12), position[2] + scale * 0.55)
+            vertebra = self._create_composite_cube(f"{name}_TailVertebra_{i}", vertebra_pos, vertebra_scale, fur_white)
+            created_actors.append(vertebra["actor"])
+
+        # Tail main (furry tail)
         tail_scale = (scale * 0.08, scale * 0.5, scale * 0.08)
         tail_pos = (position[0], position[1] + scale * 0.5, position[2] + scale * 0.55)
-        tail = self._create_composite_cube(f"{name}_Tail", tail_pos, tail_scale, fur_color)
+        tail = self._create_composite_cube(f"{name}_Tail", tail_pos, tail_scale, fur_white)
         created_actors.append(tail["actor"])
 
         # Tail tuft
         tail_tuft_scale = (scale * 0.1, scale * 0.1, scale * 0.1)
         tail_tuft_pos = (position[0], position[1] + scale * 0.8, position[2] + scale * 0.55)
-        tail_tuft = self._create_composite_cube(f"{name}_TailTuft", tail_tuft_pos, tail_tuft_scale, gray_fur)
+        tail_tuft = self._create_composite_cube(f"{name}_TailTuft", tail_tuft_pos, tail_tuft_scale, fur_gray)
         created_actors.append(tail_tuft["actor"])
 
-        # Frost breath aura
-        for i in range(5):
-            frost_scale = (scale * 0.12, scale * 0.03, scale * 0.12)
-            frost_pos = (
-                position[0] + ((i % 3) - 1) * scale * 0.08,
-                position[1] - scale * 0.55 - i * scale * 0.05,
-                position[2] + scale * 0.78
+        # SURFACE DETAIL - Realistic mountain weathering
+        # Frost-burned fur tips
+        for i in range(8):
+            burn_scale = (scale * 0.12, scale * 0.025, scale * 0.12)
+            burn_pos = (
+                position[0] + ((i % 3) - 1) * scale * 0.2,
+                position[1] + ((i // 3) % 2) * scale * 0.3,
+                position[2] + scale * (0.3 + (i // 6) * scale * 0.3)
             )
-            frost = self._create_composite_cube(
-                f"{name}_FrostBreath_{i}", frost_pos, frost_scale, frost_color
-            )
-            created_actors.append(frost["actor"])
+            burn = self._create_composite_cube(f"{name}_FrostBurn_{i}", burn_pos, burn_scale, frost_burn)
+            created_actors.append(burn["actor"])
 
-        unreal.log(f"❄️ SNOW DEMON created with {len(created_actors)} components (Hollywood Ready - Feline Predator)")
+        # Ice crystal accumulation (NOT magical frost)
+        for i in range(6):
+            ice_scale = (scale * 0.06, scale * 0.02, scale * 0.06)
+            ice_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.3,
+                position[1] + scale * 0.48,
+                position[2] + scale * (0.4 + i * scale * 0.15)
+            )
+            ice = self._create_composite_cube(f"{name}_IceCrystal_{i}", ice_pos, ice_scale, shadow_gray)
+            created_actors.append(ice["actor"])
+
+        # Snow accumulation in fur
+        for i in range(10):
+            snow_scale = (scale * 0.08, scale * 0.025, scale * 0.08)
+            snow_pos = (
+                position[0] + ((i % 4) - 1.5) * scale * 0.15,
+                position[1] + ((i // 4) % 2) * scale * 0.25,
+                position[2] + scale * (0.25 + (i // 8) * scale * 0.25)
+            )
+            snow = self._create_composite_cube(f"{name}_SnowAccum_{i}", snow_pos, snow_scale, fur_cream)
+            created_actors.append(snow["actor"])
+
+        # Fur texture variation
+        for i in range(12):
+            texture_scale = (scale * 0.1, scale * 0.025, scale * 0.1)
+            texture_pos = (
+                position[0] + ((i % 4) - 1.5) * scale * 0.12,
+                position[1] + ((i // 4) % 3) * scale * 0.15,
+                position[2] + scale * (0.2 + (i // 12) * scale * 0.25)
+            )
+            texture = self._create_composite_cube(f"{name}_FurTexture_{i}", texture_pos, texture_scale,
+                                                fur_white if i % 2 == 0 else fur_gray)
+            created_actors.append(texture["actor"])
+
+        unreal.log(f"❄️ SNOW DEMON created with {len(created_actors)} components (Realistic + Boned)")
         return {
-            "message": f"Created {name} (Snow Demon - Hollywood Ready - Cat-like Mountain Predator)",
+            "message": f"Created {name} (Snow Demon - Realistic + Fully Boned)",
             "name": name,
             "type": "snow demon",
-            "actors": created_actors
+            "actors": created_actors,
+            "bones": bones
         }
 
     def _create_field_demon_hollywood(self, parsed: dict) -> dict:
         """
-        FIELD DEMON (Moderate Confidence)
-        - Feline plains runner
-        - Built for speed across open terrain
-        - Grass-colored camouflage
-        - Pack hunting behavior
-        - Materials: tawny gold, grass green, earth brown, savanna tones
-        - Scale: Medium quadrupedal (5-7 feet long)
-        - Locomotion: Sprinting plains hunter
+        FIELD DEMON - REALISTIC QUADRUPEDAL FELINE ANIMATABLE VERSION
+        Feline plains runner (5-7 feet long)
+        Built for speed across open terrain
+        Materials: Real tawny fur, grass tones, earth brown (NO MAGICAL EFFECTS)
+        Full feline quadrupedal bone structure for animation
         """
         name = parsed.get("name") or "FieldDemon"
         props = parsed["properties"]
         position = props["position"]
         scale = props["size"] or 1.5
 
-        unreal.log("🌾 Creating FIELD DEMON (Hollywood Ready - Feline Plains Runner)...")
+        unreal.log("🌾 Creating FIELD DEMON (Realistic + Boned)...")
 
         created_actors = []
-        base_color = (0.75, 0.68, 0.45)  # Tawny gold
-        grass_color = (0.58, 0.62, 0.35)  # Grass green
-        earth_color = (0.52, 0.45, 0.32)  # Earth brown
-        eye_color = (0.9, 0.75, 0.3)  # Golden predator eyes
+        bones = {}
+
+        # REALISTIC PLAINS COLORS - Natural savanna predator appearance
+        tawny_gold = (0.75, 0.68, 0.45)          # Tawny gold base
+        grass_green = (0.58, 0.62, 0.35)         # Grass undertones
+        earth_brown = (0.52, 0.45, 0.32)         # Earth brown
+        cream_under = (0.85, 0.80, 0.68)         # Cream underfur
+        shadow_dark = (0.42, 0.38, 0.28)         # Deep shadows
+        dust_tan = (0.68, 0.62, 0.52)            # Dust coating
+
+        # QUADRUPEDAL FELINE SKELETON - Sprinting predator structure
+        # Spine vertebrae (flexible for running)
+        for i in range(9):
+            spine_pos = (position[0], position[1] - scale * 0.12 + i * scale * 0.12, position[2] + scale * 0.7)
+            spine_bone = self._create_bone_joint(f"{name}_Spine_{i}", spine_pos, scale)
+            created_actors.append(spine_bone["actor"])
+
+        # Rib cage (lean but strong)
+        for i in range(6):
+            rib_angle = (math.pi * i) / 6
+            rib_pos = (
+                position[0] + scale * 0.24 * math.cos(rib_angle),
+                position[1] + scale * 0.45 + scale * 0.24 * math.sin(rib_angle),
+                position[2] + scale * 0.75
+            )
+            rib_bone = self._create_bone_joint(f"{name}_Rib_{i}", rib_pos, scale)
+            created_actors.append(rib_bone["actor"])
 
         # FELINE BODY - Built for speed
-        body_scale = (scale * 0.55, scale * 0.4, scale * 1.1)
-        body_pos = (position[0], position[1], position[2] + scale * 0.55)
-        body = self._create_composite_cube(f"{name}_Torso", body_pos, body_scale, base_color)
-        created_actors.append(body["actor"])
+        torso_scale = (scale * 0.55, scale * 0.4, scale * 1.1)
+        torso_pos = (position[0], position[1], position[2] + scale * 0.55)
+        torso = self._create_composite_cube(f"{name}_Torso", torso_pos, torso_scale, tawny_gold)
+        created_actors.append(torso["actor"])
 
-        # Grass stripe camouflage
+        # Grass stripe camouflage (natural coloration)
         for i in range(8):
             stripe_scale = (scale * 0.5, scale * 0.04, scale * 0.2)
             stripe_pos = (
@@ -3909,104 +5414,272 @@ class InfiniteCreationEngine:
                 position[1] + ((i % 3) - 1) * scale * 0.2,
                 position[2] + scale * 0.3 + (i // 3) * scale * 0.35
             )
-            stripe = self._create_composite_cube(
-                f"{name}_GrassStripe_{i}", stripe_pos, stripe_scale, grass_color
-            )
+            stripe = self._create_composite_cube(f"{name}_GrassStripe_{i}", stripe_pos, stripe_scale, grass_green)
             created_actors.append(stripe["actor"])
 
+        # Chest definition (lean runner)
+        chest_scale = (scale * 0.4, scale * 0.08, scale * 0.3)
+        chest_pos = (position[0], position[1] - scale * 0.25, position[2] + scale * 0.7)
+        chest = self._create_composite_cube(f"{name}_Chest", chest_pos, chest_scale, cream_under)
+        created_actors.append(chest["actor"])
+
+        # NECK - Lean runner neck
+        for i in range(3):
+            neck_scale = (scale * 0.16, scale * 0.16, scale * 0.08)
+            neck_pos = (position[0], position[1] - scale * (0.2 + i * 0.07), position[2] + scale * 0.68)
+            neck = self._create_composite_cube(f"{name}_NeckVertebra_{i}", neck_pos, neck_scale, tawny_gold)
+            created_actors.append(neck["actor"])
+
+        neck_main_scale = (scale * 0.2, scale * 0.2, scale * 0.18)
+        neck_main_pos = (position[0], position[1] - scale * 0.2, position[2] + scale * 0.65)
+        neck_main = self._create_composite_cube(f"{name}_Neck_Main", neck_main_pos, neck_main_scale, tawny_gold)
+        created_actors.append(neck_main["actor"])
+
         # FELINE HEAD
-        head_scale = (scale * 0.26, scale * 0.32, scale * 0.22)
-        head_pos = (position[0], position[1] - scale * 0.12, position[2] + scale * 0.75)
-        head = self._create_composite_cube(f"{name}_Head", head_pos, head_scale, base_color)
-        created_actors.append(head["actor"])
+        skull_scale = (scale * 0.26, scale * 0.32, scale * 0.22)
+        skull_pos = (position[0], position[1] - scale * 0.12, position[2] + scale * 0.75)
+        skull = self._create_composite_cube(f"{name}_Skull", skull_pos, skull_scale, tawny_gold)
+        created_actors.append(skull["actor"])
 
         # Muzzle
         muzzle_scale = (scale * 0.14, scale * 0.18, scale * 0.1)
         muzzle_pos = (position[0], position[1] - scale * 0.35, position[2] + scale * 0.7)
-        muzzle = self._create_composite_cube(f"{name}_Muzzle", muzzle_pos, muzzle_scale, base_color)
+        muzzle = self._create_composite_cube(f"{name}_Muzzle", muzzle_pos, muzzle_scale, tawny_gold)
         created_actors.append(muzzle["actor"])
+
+        # REALISTIC EYES - Feline hunter eyes (NOT glowing gold)
+        for side in [-1, 1]:
+            # Eye socket
+            socket_scale = (scale * 0.07, scale * 0.055, scale * 0.07)
+            socket_pos = (position[0] + side * scale * 0.07, position[1] - scale * 0.22, position[2] + scale * 0.77)
+            socket = self._create_composite_cube(f"{name}_EyeSocket_{'L' if side < 0 else 'R'}", socket_pos, socket_scale, shadow_dark)
+            created_actors.append(socket["actor"])
+
+            # Eye (natural amber-brown)
+            eye_scale = (scale * 0.05, scale * 0.05, scale * 0.045)
+            eye_pos = (position[0] + side * scale * 0.07, position[1] - scale * 0.25, position[2] + scale * 0.77)
+            eye = self._create_composite_cube(f"{name}_Eye_{'L' if side < 0 else 'R'}", eye_pos, eye_scale, (0.72, 0.58, 0.35))
+            created_actors.append(eye["actor"])
+
+            # Eyelid
+            eyelid_scale = (scale * 0.055, scale * 0.025, scale * 0.05)
+            eyelid_pos = (position[0] + side * scale * 0.07, position[1] - scale * 0.19, position[2] + scale * 0.8)
+            eyelid = self._create_composite_cube(f"{name}_Eyelid_{'L' if side < 0 else 'R'}", eyelid_pos, eyelid_scale, tawny_gold)
+            created_actors.append(eyelid["actor"])
+
+        # Nose
+        nose_scale = (scale * 0.07, scale * 0.07, scale * 0.045)
+        nose_pos = (position[0], position[1] - scale * 0.48, position[2] + scale * 0.7)
+        nose = self._create_composite_cube(f"{name}_Nose", nose_pos, nose_scale, shadow_dark)
+        created_actors.append(nose["actor"])
+
+        # Nostrils
+        for side in [-1, 1]:
+            nostril_scale = (scale * 0.018, scale * 0.03, scale * 0.018)
+            nostril_pos = (position[0] + side * scale * 0.02, position[1] - scale * 0.5, position[2] + scale * 0.69)
+            nostril = self._create_composite_cube(f"{name}_Nostril_{'L' if side < 0 else 'R'}", nostril_pos, nostril_scale, (0.32, 0.28, 0.25))
+            created_actors.append(nostril["actor"])
+
+        # Fangs
+        for i in range(4):
+            fang_scale = (scale * 0.022, scale * 0.045, scale * 0.022)
+            fang_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.045,
+                position[1] - scale * 0.38,
+                position[2] + scale * (0.7 + (i // 2) * scale * 0.025)
+            )
+            fang = self._create_composite_cube(f"{name}_Fang_{i}", fang_pos, fang_scale, cream_under)
+            created_actors.append(fang["actor"])
 
         # Ears - Alert cat ears
         for side in [-1, 1]:
-            ear_scale = (scale * 0.08, scale * 0.1, scale * 0.12)
-            ear_pos = (head_pos[0] + side * scale * 0.14, head_pos[1] - scale * 0.2, head_pos[2] + scale * 0.12)
-            ear = self._create_composite_cube(
-                f"{name}_Ear_{'L' if side < 0 else 'R'}", ear_pos, ear_scale, base_color
-            )
+            ear_scale = (scale * 0.09, scale * 0.1, scale * 0.14)
+            ear_pos = (skull_pos[0] + side * scale * 0.14, skull_pos[1] - scale * 0.18, skull_pos[2] + scale * 0.12)
+            ear = self._create_composite_cube(f"{name}_Ear_{'L' if side < 0 else 'R'}", ear_pos, ear_scale, tawny_gold)
             created_actors.append(ear["actor"])
 
-        # Golden predator eyes
-        eye_scale = (scale * 0.055, scale * 0.055, scale * 0.055)
-        eye_pos_l = (head_pos[0] - scale * 0.07, head_pos[1] - scale * 0.3, head_pos[2] + scale * 0.02)
-        eye_pos_r = (head_pos[0] + scale * 0.07, head_pos[1] - scale * 0.3, head_pos[2] + scale * 0.02)
-        eye_l = self._create_composite_cube(f"{name}_Eye_L", eye_pos_l, eye_scale, eye_color)
-        eye_r = self._create_composite_cube(f"{name}_Eye_R", eye_pos_r, eye_scale, eye_color)
-        created_actors.append(eye_l["actor"])
-        created_actors.append(eye_r["actor"])
+            # Inner ear
+            inner_scale = (scale * 0.05, scale * 0.05, scale * 0.08)
+            inner_pos = (ear_pos[0], ear_pos[1], ear_pos[2] + scale * 0.02)
+            inner = self._create_composite_cube(f"{name}_InnerEar_{'L' if side < 0 else 'R'}", inner_pos, inner_scale, cream_under)
+            created_actors.append(inner["actor"])
 
-        # QUADRUPEDAL LEGS - Sprinting limbs
+        # FELINE LEGS - Built for speed
         leg_positions = [
-            (-1, -1, 0.7),   # Front left
-            (1, -1, 0.7),    # Front right
-            (-1, 1, 0.4),    # Back left
-            (1, 1, 0.4)      # Back right
+            (-1, -1, "FrontLeft"),   # Front left
+            (1, -1, "FrontRight"),   # Front right
+            (-1, 1, "BackLeft"),     # Back left
+            (1, 1, "BackRight")      # Back right
         ]
 
-        for i, (side_x, side_y, forward_bias) in enumerate(leg_positions):
-            # Upper leg - muscular
-            upper_scale = (scale * 0.12, scale * 0.1, scale * 0.32)
+        for side_x, side_y, leg_name in leg_positions:
+            # Shoulder/Hip joint
+            joint_pos = (
+                position[0] + side_x * scale * 0.26,
+                position[1] + side_y * scale * 0.16,
+                position[2] + scale * 0.5
+            )
+            joint_bone = self._create_bone_joint(f"{name}_LegJoint_{leg_name}", joint_pos, scale)
+            created_actors.append(joint_bone["actor"])
+
+            # Upper leg - lean muscular
+            upper_scale = (scale * 0.13, scale * 0.1, scale * 0.32)
             upper_pos = (
-                position[0] + side_x * scale * 0.25,
+                position[0] + side_x * scale * 0.26,
                 position[1] + side_y * scale * 0.16,
                 position[2] + scale * 0.4
             )
-            upper = self._create_composite_cube(
-                f"{name}_UpperLeg_{i}", upper_pos, upper_scale, base_color
-            )
+            upper = self._create_composite_cube(f"{name}_UpperLeg_{leg_name}", upper_pos, upper_scale, tawny_gold)
             created_actors.append(upper["actor"])
 
-            # Lower leg - sleek running
-            lower_scale = (scale * 0.08, scale * 0.08, scale * 0.3)
+            # Muscle definition (streamlined for speed)
+            muscle_scale = (scale * 0.12, scale * 0.07, scale * 0.18)
+            muscle_pos = (
+                position[0] + side_x * scale * 0.28,
+                position[1] + side_y * scale * 0.16 - scale * 0.04,
+                position[2] + scale * 0.42
+            )
+            muscle = self._create_composite_cube(f"{name}_LegMuscle_{leg_name}", muscle_pos, muscle_scale, earth_brown)
+            created_actors.append(muscle["actor"])
+
+            # Elbow/Knee joint
+            elbow_pos = (
+                position[0] + side_x * scale * 0.26,
+                position[1] + side_y * scale * 0.16,
+                position[2] + scale * 0.18
+            )
+            elbow_bone = self._create_bone_joint(f"{name}_ElbowKnee_{leg_name}", elbow_pos, scale)
+            created_actors.append(elbow_bone["actor"])
+
+            # Lower leg - sleek
+            lower_scale = (scale * 0.09, scale * 0.09, scale * 0.28)
             lower_pos = (
-                position[0] + side_x * scale * 0.25,
+                position[0] + side_x * scale * 0.26,
                 position[1] + side_y * scale * 0.16,
                 position[2] + scale * 0.12
             )
-            lower = self._create_composite_cube(
-                f"{name}_LowerLeg_{i}", lower_pos, lower_scale, earth_color
-            )
+            lower = self._create_composite_cube(f"{name}_LowerLeg_{leg_name}", lower_pos, lower_scale, grass_green)
             created_actors.append(lower["actor"])
 
-            # Paw - Running foot
-            paw_scale = (scale * 0.12, scale * 0.06, scale * 0.05)
-            paw_pos = (
-                position[0] + side_x * scale * 0.25,
+            # Ankle/Wrist joint
+            ankle_pos = (
+                position[0] + side_x * scale * 0.26,
                 position[1] + side_y * scale * 0.16,
-                position[2] - scale * 0.02
+                position[2]
             )
-            paw = self._create_composite_cube(
-                f"{name}_Paw_{i}", paw_pos, paw_scale, base_color
+            ankle_bone = self._create_bone_joint(f"{name}_AnkleWrist_{leg_name}", ankle_pos, scale)
+            created_actors.append(ankle_bone["actor"])
+
+            # Paw - runner paw
+            paw_scale = (scale * 0.12, scale * 0.08, scale * 0.05)
+            paw_pos = (
+                position[0] + side_x * scale * 0.26,
+                position[1] + side_y * scale * 0.18,
+                position[2] - scale * 0.03
             )
+            paw = self._create_composite_cube(f"{name}_Paw_{leg_name}", paw_pos, paw_scale, tawny_gold)
             created_actors.append(paw["actor"])
 
+            # Paw pads
+            for p in range(3):
+                pad_scale = (scale * 0.025, scale * 0.025, scale * 0.012)
+                pad_pos = (
+                    position[0] + side_x * scale * 0.26 + (p - 1) * scale * 0.022,
+                    position[1] + side_y * scale * 0.22,
+                    position[2] - scale * 0.035
+                )
+                pad = self._create_composite_cube(f"{name}_Pad_{leg_name}_{p}", pad_pos, pad_scale, shadow_dark)
+                created_actors.append(pad["actor"])
+
+            # Claws
+            for c in range(3):
+                claw_scale = (scale * 0.012, scale * 0.022, scale * 0.03)
+                claw_pos = (
+                    position[0] + side_x * scale * 0.26 + (c - 1) * scale * 0.022,
+                    position[1] + side_y * scale * 0.24,
+                    position[2] - scale * 0.07
+                )
+                claw = self._create_composite_cube(f"{name}_Claw_{leg_name}_{c}", claw_pos, claw_scale, cream_under)
+                created_actors.append(claw["actor"])
+
         # Tail - Balancing tail
-        tail_scale = (scale * 0.06, scale * 0.45, scale * 0.06)
+        tail_base_scale = (scale * 0.08, scale * 0.12, scale * 0.08)
+        tail_base_pos = (position[0], position[1] + scale * 0.45, position[2] + scale * 0.5)
+        tail_base = self._create_composite_cube(f"{name}_Tail_Base", tail_base_pos, tail_base_scale, tawny_gold)
+        created_actors.append(tail_base["actor"])
+
+        # Tail vertebrae
+        for i in range(5):
+            vertebra_scale = (scale * (0.07 - i * 0.01), scale * 0.1, scale * (0.07 - i * 0.01))
+            vertebra_pos = (position[0], position[1] + scale * (0.55 + i * 0.1), position[2] + scale * 0.5)
+            vertebra = self._create_composite_cube(f"{name}_TailVertebra_{i}", vertebra_pos, vertebra_scale, tawny_gold)
+            created_actors.append(vertebra["actor"])
+
+        # Tail main
+        tail_scale = (scale * 0.07, scale * 0.45, scale * 0.07)
         tail_pos = (position[0], position[1] + scale * 0.45, position[2] + scale * 0.5)
-        tail = self._create_composite_cube(f"{name}_Tail", tail_pos, tail_scale, base_color)
+        tail = self._create_composite_cube(f"{name}_Tail", tail_pos, tail_scale, tawny_gold)
         created_actors.append(tail["actor"])
 
-        # Tail tip - dark
-        tip_scale = (scale * 0.07, scale * 0.08, scale * 0.07)
-        tip_pos = (position[0], position[1] + scale * 0.75, position[2] + scale * 0.5)
-        tip = self._create_composite_cube(f"{name}_TailTip", tip_pos, tip_scale, earth_color)
+        # Tail tip (dark)
+        tip_scale = (scale * 0.06, scale * 0.08, scale * 0.06)
+        tip_pos = (position[0], position[1] + scale * 0.9, position[2] + scale * 0.5)
+        tip = self._create_composite_cube(f"{name}_Tail_Tip", tip_pos, tip_scale, earth_brown)
         created_actors.append(tip["actor"])
 
-        unreal.log(f"🌾 FIELD DEMON created with {len(created_actors)} components (Hollywood Ready - Plains Runner)")
+        # SURFACE DETAIL - Realistic savanna weathering
+        # Dust accumulation
+        for i in range(8):
+            dust_scale = (scale * 0.1, scale * 0.025, scale * 0.1)
+            dust_pos = (
+                position[0] + ((i % 3) - 1) * scale * 0.15,
+                position[1] + ((i // 3) % 2) * scale * 0.25,
+                position[2] + scale * (0.25 + (i // 6) * scale * 0.2)
+            )
+            dust = self._create_composite_cube(f"{name}_Dust_{i}", dust_pos, dust_scale, dust_tan)
+            created_actors.append(dust["actor"])
+
+        # Grass stain marks
+        for i in range(5):
+            stain_scale = (scale * 0.12, scale * 0.02, scale * 0.08)
+            stain_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.25,
+                position[1] + scale * 0.43,
+                position[2] + scale * (0.3 + i * scale * 0.15)
+            )
+            stain = self._create_composite_cube(f"{name}_GrassStain_{i}", stain_pos, stain_scale, grass_green)
+            created_actors.append(stain["actor"])
+
+        # Sun-bleached patches
+        for i in range(6):
+            bleach_scale = (scale * 0.1, scale * 0.025, scale * 0.1)
+            bleach_pos = (
+                position[0] + ((i % 2) - 0.5) * scale * 0.2,
+                position[1] + ((i // 3) % 2) * scale * 0.22,
+                position[2] + scale * (0.22 + i * scale * 0.12)
+            )
+            bleach = self._create_composite_cube(f"{name}_Bleached_{i}", bleach_pos, bleach_scale, cream_under)
+            created_actors.append(bleach["actor"])
+
+        # Fur texture variation
+        for i in range(10):
+            texture_scale = (scale * 0.08, scale * 0.025, scale * 0.08)
+            texture_pos = (
+                position[0] + ((i % 4) - 1.5) * scale * 0.12,
+                position[1] + ((i // 4) % 2) * scale * 0.18,
+                position[2] + scale * (0.18 + (i // 8) * scale * 0.2)
+            )
+            texture = self._create_composite_cube(f"{name}_FurTexture_{i}", texture_pos, texture_scale,
+                                                tawny_gold if i % 2 == 0 else earth_brown)
+            created_actors.append(texture["actor"])
+
+        unreal.log(f"🌾 FIELD DEMON created with {len(created_actors)} components (Realistic + Boned)")
         return {
-            "message": f"Created {name} (Field Demon - Hollywood Ready - Feline Plains Runner)",
+            "message": f"Created {name} (Field Demon - Realistic + Fully Boned)",
             "name": name,
             "type": "field demon",
-            "actors": created_actors
+            "actors": created_actors,
+            "bones": bones
         }
 
     def _create_coreling_generic(self, parsed: dict) -> dict:
@@ -5298,6 +6971,48 @@ class InfiniteCreationEngine:
     # ============================================================
     # COMPOSITE CREATION HELPERS
     # ============================================================
+
+    def _create_bone_joint(self, name: str, position: Tuple[float, float, float],
+                           scale: float) -> dict:
+        """
+        Create a bone joint for animation rigging
+        This creates a visual marker and returns bone reference for animation system
+        """
+        try:
+            loc = unreal.Vector(position[0], position[1], position[2])
+
+            # Create a small cube as bone/joint visual
+            bone_scale = (scale * 0.08, scale * 0.08, scale * 0.08)
+            actor = unreal.EditorLevelLibrary.spawn_actor_from_class(unreal.StaticMeshActor, loc)
+            actor.set_actor_label(name)
+            actor.set_actor_scale3d(unreal.Vector(bone_scale[0], bone_scale[1], bone_scale[2]))
+
+            # Create bone material (subtle gray for joints)
+            bone_color = (0.3, 0.3, 0.3)
+            mat_name = f"BoneJoint_Mat"
+            mat_path = self._create_simple_material_for_name(mat_name, bone_color)
+
+            material = unreal.load_asset(mat_path, unreal.Material)
+            if material:
+                mesh_comp = actor.get_component_by_class(unreal.StaticMeshComponent)
+                if mesh_comp:
+                    mesh_comp.set_material(0, material)
+
+            # Store bone position for rigging
+            bone_data = {
+                "name": name,
+                "actor": actor,
+                "position": position,
+                "scale": scale,
+                "type": "joint",
+                "children": []
+            }
+
+            return bone_data
+
+        except Exception as e:
+            unreal.log_error(f"Bone joint creation failed: {e}")
+            return {"error": str(e)}
 
     def _create_composite_cube(self, name: str, position: Tuple[float, float, float],
                                scale: Tuple[float, float, float],
